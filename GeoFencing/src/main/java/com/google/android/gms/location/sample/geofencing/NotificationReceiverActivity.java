@@ -174,7 +174,7 @@ public class NotificationReceiverActivity extends AppCompatActivity
         setContentView(R.layout.activity_notification_receiver);
 
 
-        getSupportActionBar().hide();
+        //getSupportActionBar().hide();
 
         punchinoutbutton = (LinearLayout) findViewById(R.id.punchinoutbutton);
 
