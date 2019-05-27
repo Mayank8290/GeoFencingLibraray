@@ -1,0 +1,14 @@
+<resources>
+    <style name="Theme.Base" parent="Theme.AppCompat.Light">
+    </style>
+
+    <!--<style name="spinnerItemStyle" parent="android:Widget.TextView.SpinnerItem">-->
+      <!--<item name="android:textColor">#ffffff</item>-->
+    <!--</style>-->
+
+    <!--<style name="spinnerDropDownItemStyle" parent="android:TextAppearance.Widget.TextView.SpinnerItem">-->
+
+    <!--</style>-->
+
+
+</resources>
