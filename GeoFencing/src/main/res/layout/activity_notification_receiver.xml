@@ -113,6 +113,7 @@
 
 
                 <ImageView
+                    android:id="@+id/openspinnerimage"
                     android:padding="8dp"
                     android:layout_marginLeft="-9dp"
                     android:background="@drawable/roundbuttonother"

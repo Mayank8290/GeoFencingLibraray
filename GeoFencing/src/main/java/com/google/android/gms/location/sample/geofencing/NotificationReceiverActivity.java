@@ -33,9 +33,11 @@ import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.TaskStackBuilder;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.IntentSender;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
@@ -43,6 +45,7 @@ import android.graphics.Color;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
+import android.media.Image;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -57,6 +60,7 @@ import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.Spinner;
 import android.widget.TextView;
@@ -112,6 +116,7 @@ public class NotificationReceiverActivity extends AppCompatActivity
     private static final float MIN_DISTANCE = 1000;
 
 
+    ImageView openspinnerimage;
 
     LinearLayout punchinoutbutton;
 
@@ -184,6 +189,14 @@ public class NotificationReceiverActivity extends AppCompatActivity
             punchinouttext.setText("Punch Out");
 
         }
+
+        openspinnerimage = (ImageView)findViewById(R.id.openspinnerimage);
+        openspinnerimage.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                spinner.performClick();
+            }
+        });
 
         punchinoutbutton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -363,6 +376,7 @@ public class NotificationReceiverActivity extends AppCompatActivity
                 {
 
 
+                    mMap.clear();
 
                     LatLng geofencelatLng = new LatLng(28.5388096,77.1514862);
 
@@ -398,7 +412,7 @@ public class NotificationReceiverActivity extends AppCompatActivity
                 }
                 else if(position == 2)
                 {
-
+                    mMap.clear();
 
                     LatLng geofencelatLng = new LatLng(28.412402603746372,77.0433149267526);
 
@@ -434,7 +448,7 @@ public class NotificationReceiverActivity extends AppCompatActivity
                 else if(position == 3)
                 {
 
-
+                    mMap.clear();
 
                     LatLng geofencelatLng = new LatLng(28.53988,77.15401);
 
@@ -1258,6 +1272,12 @@ public class NotificationReceiverActivity extends AppCompatActivity
     }
 
     //
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        getApplicationContext().registerReceiver(new GPScheck(), new IntentFilter(LocationManager.PROVIDERS_CHANGED_ACTION));
+    }
 
 
     //
