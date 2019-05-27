@@ -19,17 +19,18 @@ package com.google.android.gms.location.sample.geofencing;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
+import android.app.TaskStackBuilder;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.os.Build;
-import androidx.core.app.JobIntentService;
-import androidx.core.app.NotificationCompat;
-import androidx.core.app.TaskStackBuilder;
+
 
 import android.os.Handler;
 import android.os.Looper;
+import android.support.v4.app.JobIntentService;
+import android.support.v4.app.NotificationCompat;
 import android.text.TextUtils;
 import android.util.Log;
 import android.widget.Toast;
@@ -133,7 +134,7 @@ public class GeofenceTransitionsJobIntentService extends JobIntentService {
 
     /**
      * Posts a notification in the notification bar when a transition is detected.
-     * If the user clicks the notification, control goes to the MainActivity.
+     * If the user clicks the notification, control goes to the .
      */
     private void sendNotification(String notificationDetails) {
 

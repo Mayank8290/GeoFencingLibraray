@@ -9,10 +9,11 @@ import android.content.Intent;
 
 import android.location.LocationManager;
 import android.os.Build;
+import android.support.annotation.RequiresApi;
 import android.widget.Toast;
 
 
-import androidx.annotation.RequiresApi;
+
 
 public class GPScheck extends BroadcastReceiver {
 
