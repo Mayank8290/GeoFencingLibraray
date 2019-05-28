@@ -114,7 +114,7 @@ public class NotificationReceiverActivity extends AppCompatActivity
 
     private LocationManager locationManager;
     private static final long MIN_TIME = 400;
-    private static final float MIN_DISTANCE = 1000;
+    private static final float MIN_DISTANCE = 500;
 
 
     ImageView openspinnerimage;
@@ -689,6 +689,7 @@ public class NotificationReceiverActivity extends AppCompatActivity
         Task<LocationSettingsResponse> task=LocationServices.getSettingsClient(this).checkLocationSettings(builder.build());
 
         task.addOnCompleteListener(new OnCompleteListener<LocationSettingsResponse>() {
+            @RequiresApi(api = Build.VERSION_CODES.M)
             @Override
             public void onComplete(Task<LocationSettingsResponse> task) {
                 try {
@@ -753,7 +754,7 @@ public class NotificationReceiverActivity extends AppCompatActivity
                             // for Activity#requestPermissions for more details.
                             return;
                         }
-                        locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, MIN_TIME, MIN_DISTANCE, this); //You can also use LocationManager.GPS_PROVIDER and LocationManager.PASSIVE_PROVIDER
+                        locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, MIN_TIME, MIN_DISTANCE, NotificationReceiverActivity.this); //You can also use LocationManager.GPS_PROVIDER and LocationManager.PASSIVE_PROVIDER
 
                         break;
                     case Activity.RESULT_CANCELED:
@@ -770,6 +771,7 @@ public class NotificationReceiverActivity extends AppCompatActivity
 
     // for geo fencing
 
+    @RequiresApi(api = Build.VERSION_CODES.M)
     @Override
     public void onStart() {
         super.onStart();
@@ -1277,7 +1279,7 @@ public class NotificationReceiverActivity extends AppCompatActivity
     @Override
     protected void onResume() {
         super.onResume();
-        getApplicationContext().registerReceiver(new GPScheck(), new IntentFilter(LocationManager.PROVIDERS_CHANGED_ACTION));
+//        getApplicationContext().registerReceiver(new GPScheck(), new IntentFilter(LocationManager.PROVIDERS_CHANGED_ACTION));
     }
 
 
