@@ -1,7 +1,9 @@
 package com.google.android.gms.location.sample.geofencing;
 
 
+import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.ApiException;
+import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.common.api.ResolvableApiException;
 import com.google.android.gms.location.Geofence;
 import com.google.android.gms.location.GeofencingClient;
@@ -12,6 +14,8 @@ import com.google.android.gms.location.LocationSettingsRequest;
 import com.google.android.gms.location.LocationSettingsResponse;
 import com.google.android.gms.location.LocationSettingsStates;
 import com.google.android.gms.location.LocationSettingsStatusCodes;
+import com.google.android.gms.location.sample.geofencing.BackgroundLocationUpdate.LocationRequestHelper;
+import com.google.android.gms.location.sample.geofencing.BackgroundLocationUpdate.LocationUpdatesBroadcastReceiver;
 import com.google.android.gms.location.sample.geofencing.LocalData.LocalData;
 import com.google.android.gms.maps.CameraUpdate;
 import com.google.android.gms.maps.CameraUpdateFactory;
@@ -37,7 +41,6 @@ import android.app.TaskStackBuilder;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.content.IntentSender;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
@@ -45,7 +48,6 @@ import android.graphics.Color;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
-import android.media.Image;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -56,6 +58,7 @@ import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.provider.Settings;
 import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.support.annotation.RequiresApi;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.ActivityCompat;
@@ -74,9 +77,6 @@ import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import org.w3c.dom.Text;
-
-import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Map;
 
@@ -95,7 +95,51 @@ public class NotificationReceiverActivity extends AppCompatActivity
         OnMapReadyCallback,
         OnCompleteListener<Void>,
         LocationListener,
+
+        GoogleApiClient.ConnectionCallbacks,
+        GoogleApiClient.OnConnectionFailedListener,
+        SharedPreferences.OnSharedPreferenceChangeListener,
+
         ActivityCompat.OnRequestPermissionsResultCallback {
+
+    // for background location update
+
+    /**
+     * The desired interval for location updates. Inexact. Updates may be more or less frequent.
+     */
+    // FIXME: 5/16/17
+    private static final long UPDATE_INTERVAL = 10 * 1000;
+
+    /**
+     * The fastest rate for active location updates. Updates will never be more frequent
+     * than this value, but they may be less frequent.
+     */
+    // FIXME: 5/14/17
+    private static final long FASTEST_UPDATE_INTERVAL = UPDATE_INTERVAL / 2;
+
+    /**
+     * The max time before batched results are delivered by location services. Results may be
+     * delivered sooner than this interval.
+     */
+    private static final long MAX_WAIT_TIME = UPDATE_INTERVAL * 3;
+
+    /**
+     * Stores parameters for requests to the FusedLocationProviderApi.
+     */
+    private LocationRequest mLocationRequest;
+
+    /**
+     * The entry point to Google Play Services.
+     */
+    private GoogleApiClient mGoogleApiClient;
+
+
+
+
+    //
+
+
+
 
     /**
      * Request code for location permission request.
@@ -127,6 +171,49 @@ public class NotificationReceiverActivity extends AppCompatActivity
     private static final String TAG = NotificationReceiverActivity.class.getSimpleName();
 
     private static final int REQUEST_PERMISSIONS_REQUEST_CODE = 34;
+
+    @Override
+    public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
+
+    }
+
+    public void requestLocationUpdates(View view) {
+        try {
+            Log.i(TAG, "Starting location updates");
+            LocationRequestHelper.setRequesting(this, true);
+            LocationServices.FusedLocationApi.requestLocationUpdates(
+                    mGoogleApiClient, mLocationRequest, getPendingIntent());
+        } catch (SecurityException e) {
+            LocationRequestHelper.setRequesting(this, false);
+            e.printStackTrace();
+        }
+    }
+
+    @Override
+    public void onConnected(@Nullable Bundle bundle) {
+        Log.i(TAG, "GoogleApiClient connected");
+    }
+
+    private PendingIntent getPendingIntent() {
+        Intent intent = new Intent(this, LocationUpdatesBroadcastReceiver.class);
+        intent.setAction(LocationUpdatesBroadcastReceiver.ACTION_PROCESS_UPDATES);
+        return PendingIntent.getBroadcast(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+    }
+
+
+    @Override
+    public void onConnectionSuspended(int i) {
+        final String text = "Connection suspended";
+        Log.w(TAG, text + ": Error code: " + i);
+        showSnackbar("Connection suspended");
+    }
+
+    @Override
+    public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {
+        final String text = "Exception while connecting to Google Play services";
+        Log.w(TAG, text + ": " + connectionResult.getErrorMessage());
+        showSnackbar(text);
+    }
 
     /**
      * Tracks whether the user requested to add or remove geofences, or to do neither.
@@ -358,6 +445,7 @@ public class NotificationReceiverActivity extends AppCompatActivity
                 // your code here
 
                 String location = contacts.get(position);
+
                 if(position > 0)
                 {
                     //Toast.makeText(getApplicationContext(),contacts.get(position),Toast.LENGTH_LONG).show();
@@ -365,21 +453,20 @@ public class NotificationReceiverActivity extends AppCompatActivity
 
                     mGeofenceList.clear();
 
-                    new LocalData(getApplicationContext()).setuserselctedlocation(location);
 
-                    Toast.makeText(getApplicationContext(),new LocalData(getApplicationContext()).getuserselctedlocation(),Toast.LENGTH_LONG).show();
+
+                    // Toast.makeText(getApplicationContext(),new LocalData(getApplicationContext()).getuserselctedlocation(),Toast.LENGTH_LONG).show();
 
                 }
 
 
 
-                if(position == 1)
-                {
+                if(position == 1) {
 
-
+                    if (!location.equals(new LocalData(getApplicationContext()).getuserselctedlocation())) {
                     mMap.clear();
 
-                    LatLng geofencelatLng = new LatLng(28.5388096,77.1514862);
+                    LatLng geofencelatLng = new LatLng(28.5388096, 77.1514862);
 
                     mMap.addCircle(new CircleOptions()
                             .center(geofencelatLng)
@@ -392,8 +479,7 @@ public class NotificationReceiverActivity extends AppCompatActivity
                     mMap.animateCamera(cameraUpdate);
                     locationManager.removeUpdates(NotificationReceiverActivity.this);
 
-
-
+                    new LocalData(getApplicationContext()).setuserselctedlocation(location);
                     populateGeofenceList();
 
                     if (!checkPermissions()) {
@@ -401,21 +487,38 @@ public class NotificationReceiverActivity extends AppCompatActivity
                         requestPermissions();
                         return;
                     }
-                    if(getGeofencesAdded())
-                    {
+                    if (getGeofencesAdded()) {
                         removeGeofences();
                         addGeofences();
-                    }
-                    else {
+                    } else {
                         addGeofences();
+                    }
+                }
+                else
+                    {
+                        mMap.clear();
+
+                        LatLng geofencelatLng = new LatLng(28.5388096, 77.1514862);
+
+                        mMap.addCircle(new CircleOptions()
+                                .center(geofencelatLng)
+                                .radius(Constants.GEOFENCE_RADIUS_HO_THE_GRAND)
+                                .strokeWidth(0f)
+                                .fillColor(0x5500ff00));
+
+                        Toast.makeText(getApplicationContext(),"Already Added",Toast.LENGTH_LONG).show();
                     }
 
                 }
-                else if(position == 2)
-                {
+                else if(position == 2) {
+
+                    if (!location.equals(new LocalData(getApplicationContext()).getuserselctedlocation())) {
+
+
+
                     mMap.clear();
 
-                    LatLng geofencelatLng = new LatLng(28.412402603746372,77.0433149267526);
+                    LatLng geofencelatLng = new LatLng(28.412402603746372, 77.0433149267526);
 
                     mMap.addCircle(new CircleOptions()
                             .center(geofencelatLng)
@@ -427,7 +530,7 @@ public class NotificationReceiverActivity extends AppCompatActivity
                     mMap.animateCamera(cameraUpdate);
                     locationManager.removeUpdates(NotificationReceiverActivity.this);
 
-
+                    new LocalData(getApplicationContext()).setuserselctedlocation(location);
                     populateGeofenceList();
 
 
@@ -436,22 +539,40 @@ public class NotificationReceiverActivity extends AppCompatActivity
                         requestPermissions();
                         return;
                     }
-                    if(getGeofencesAdded())
-                    {
+                    if (getGeofencesAdded()) {
                         removeGeofences();
                         addGeofences();
-                    }
-                    else {
+                    } else {
                         addGeofences();
                     }
 
                 }
-                else if(position == 3)
-                {
+                else
+                    {
+                        mMap.clear();
+
+                        LatLng geofencelatLng = new LatLng(28.412402603746372, 77.0433149267526);
+
+                        mMap.addCircle(new CircleOptions()
+                                .center(geofencelatLng)
+                                .radius(Constants.GEOFENCE_RADIUS_IN_METERS)
+                                .strokeWidth(0f)
+                                .fillColor(0x5500ff00));
+
+
+                        Toast.makeText(getApplicationContext(),"Already Added",Toast.LENGTH_LONG).show();
+                    }
+
+                }
+                else if(position == 3) {
+
+                    if (!location.equals(new LocalData(getApplicationContext()).getuserselctedlocation())) {
+
+
 
                     mMap.clear();
 
-                    LatLng geofencelatLng = new LatLng(28.53988,77.15401);
+                    LatLng geofencelatLng = new LatLng(28.53988, 77.15401);
 
                     mMap.addCircle(new CircleOptions()
                             .center(geofencelatLng)
@@ -464,6 +585,7 @@ public class NotificationReceiverActivity extends AppCompatActivity
                     mMap.animateCamera(cameraUpdate);
                     locationManager.removeUpdates(NotificationReceiverActivity.this);
 
+                    new LocalData(getApplicationContext()).setuserselctedlocation(location);
                     populateGeofenceList();
 
                     if (!checkPermissions()) {
@@ -471,16 +593,29 @@ public class NotificationReceiverActivity extends AppCompatActivity
                         requestPermissions();
                         return;
                     }
-                    if(getGeofencesAdded())
-                    {
+                    if (getGeofencesAdded()) {
                         removeGeofences();
                         addGeofences();
-                    }
-                    else {
+                    } else {
                         addGeofences();
+                    }
+                }
+                else
+                    {
+                        mMap.clear();
+
+                        LatLng geofencelatLng = new LatLng(28.53988, 77.15401);
+
+                        mMap.addCircle(new CircleOptions()
+                                .center(geofencelatLng)
+                                .radius(Constants.GEOFENCE_RADIUS_HMCO)
+                                .strokeWidth(0f)
+                                .fillColor(0x5500ff00));
+                        Toast.makeText(getApplicationContext(),"Already Added",Toast.LENGTH_LONG).show();
                     }
 
                 }
+
 
             }
 
@@ -491,10 +626,44 @@ public class NotificationReceiverActivity extends AppCompatActivity
 
         });
 
+        // for background location update
+
+        buildGoogleApiClient();
+
+
         //
 
 
     }
+
+
+    private void buildGoogleApiClient() {
+        if (mGoogleApiClient != null) {
+            return;
+        }
+        mGoogleApiClient = new GoogleApiClient.Builder(this)
+                .addConnectionCallbacks(this)
+                .enableAutoManage(this, this)
+                .addApi(LocationServices.API)
+                .build();
+        createLocationRequest();
+    }
+
+    private void createLocationRequest() {
+        mLocationRequest = new LocationRequest();
+
+        mLocationRequest.setInterval(UPDATE_INTERVAL);
+
+        // Sets the fastest rate for active location updates. This interval is exact, and your
+        // application will never receive updates faster than this value.
+        mLocationRequest.setFastestInterval(FASTEST_UPDATE_INTERVAL);
+        mLocationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
+
+        // Sets the maximum time when batched location updates are delivered. Updates may be
+        // delivered sooner than this interval.
+        mLocationRequest.setMaxWaitTime(MAX_WAIT_TIME);
+    }
+
 
     @RequiresApi(api = Build.VERSION_CODES.M)
     @Override
@@ -759,6 +928,13 @@ public class NotificationReceiverActivity extends AppCompatActivity
                         break;
                     case Activity.RESULT_CANCELED:
                         // The user was asked to change settings, but chose not to
+                        // or in some android system it's return canceld
+
+                        Intent intent1 = new Intent(android.provider.Settings.ACTION_LOCATION_SOURCE_SETTINGS);
+                        intent1.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                        startActivity(intent1);
+
+
                         Toast.makeText(NotificationReceiverActivity.this,"Canceled",Toast.LENGTH_SHORT).show();
                         break;
                     default:
@@ -775,6 +951,9 @@ public class NotificationReceiverActivity extends AppCompatActivity
     @Override
     public void onStart() {
         super.onStart();
+
+        PreferenceManager.getDefaultSharedPreferences(this)
+                .registerOnSharedPreferenceChangeListener(this);
 
         if (!checkPermissions()) {
             requestPermissions();

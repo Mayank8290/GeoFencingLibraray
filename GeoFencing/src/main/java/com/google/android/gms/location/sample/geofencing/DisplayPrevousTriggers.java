@@ -1,6 +1,8 @@
 package com.google.android.gms.location.sample.geofencing;
 
 import android.app.Activity;
+import android.graphics.Color;
+import android.graphics.drawable.ColorDrawable;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
@@ -10,6 +12,7 @@ import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.Window;
 import android.widget.Toast;
 
 import com.google.android.gms.location.sample.geofencing.LocalData.LocalData;
@@ -30,8 +33,16 @@ public class DisplayPrevousTriggers extends DialogFragment {
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-        getDialog().getWindow().setBackgroundDrawableResource(android.R.color.transparent);
-        return inflater.inflate(R.layout.displayprevoustrigger,container,false);
+        //getDialog().getWindow().setBackgroundDrawableResource(android.R.color.transparent);
+        //return inflater.inflate(R.layout.displayprevoustrigger,container,false);
+
+        View view = inflater.inflate(R.layout.displayprevoustrigger, container, false);
+        // Set transparent background and no title
+        if (getDialog() != null && getDialog().getWindow() != null) {
+            getDialog().getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
+            getDialog().getWindow().requestFeature(Window.FEATURE_NO_TITLE);
+        }
+        return view;
 
     }
 
