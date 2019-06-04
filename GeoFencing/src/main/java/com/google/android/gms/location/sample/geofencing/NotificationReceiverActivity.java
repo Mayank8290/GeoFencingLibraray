@@ -1,6 +1,13 @@
 package com.google.android.gms.location.sample.geofencing;
 
 
+import com.android.volley.AuthFailureError;
+import com.android.volley.Request;
+import com.android.volley.RequestQueue;
+import com.android.volley.Response;
+import com.android.volley.VolleyError;
+import com.android.volley.toolbox.JsonObjectRequest;
+import com.android.volley.toolbox.Volley;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.ApiException;
 import com.google.android.gms.common.api.GoogleApiClient;
@@ -77,7 +84,14 @@ import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import org.json.JSONObject;
+
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 
 
@@ -165,7 +179,7 @@ public class NotificationReceiverActivity extends AppCompatActivity
 
     LinearLayout punchinoutbutton;
 
-
+    LatLng usercurrentlocation;
     // for geo fencing
 
     private static final String TAG = NotificationReceiverActivity.class.getSimpleName();
@@ -177,7 +191,7 @@ public class NotificationReceiverActivity extends AppCompatActivity
 
     }
 
-    public void requestLocationUpdates(View view) {
+    public void requestLocationUpdates() {
         try {
             Log.i(TAG, "Starting location updates");
             LocationRequestHelper.setRequesting(this, true);
@@ -261,11 +275,32 @@ public class NotificationReceiverActivity extends AppCompatActivity
         setContentView(R.layout.activity_notification_receiver);
 
 
-        //getSupportActionBar().hide();
+        // getting data from previos activity
+
+        try
+        {
+            String Ecno = getIntent().getStringExtra("ecno");
+            String userLocation = getIntent().getStringExtra("location");
+
+            Toast.makeText(getApplicationContext(),"Ec No : "+Ecno+", Location : "+userLocation,Toast.LENGTH_SHORT).show();
+
+        }
+        catch (Exception e)
+        {
+            Toast.makeText(getApplicationContext(),"Data Not Getting",Toast.LENGTH_SHORT).show();
+        }
+
+
+        // data getting end
+
+       // getSupportActionBar().hide();
 
         punchinoutbutton = (LinearLayout) findViewById(R.id.punchinoutbutton);
 
         punchinouttext = (TextView)findViewById(R.id.punchinouttext);
+
+        String todaydate = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(new Date());
+
 
         if(new LocalData(getApplicationContext()).getpunchinandpounchout().equals("punchin"))
         {
@@ -276,6 +311,17 @@ public class NotificationReceiverActivity extends AppCompatActivity
         {
             punchinouttext.setText("Punch Out");
 
+        }
+
+
+        if(new LocalData(getApplicationContext()).getuserlastpunchinpunchoutdate().equals(todaydate))
+        {
+            punchinouttext.setText("Punch Out");
+            new LocalData(getApplicationContext()).setpunchinandpounchout("punchout");
+        }
+        else
+        {
+            new LocalData(getApplicationContext()).setpunchinandpounchout("punchin");
         }
 
         openspinnerimage = (ImageView)findViewById(R.id.openspinnerimage);
@@ -303,8 +349,8 @@ public class NotificationReceiverActivity extends AppCompatActivity
                            .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
                                public void onClick(DialogInterface dialog, int which) {
                                    // Continue with delete operation
-                                   punchinouttext.setText("Punch Out");
-                                   new LocalData(getApplicationContext()).setpunchinandpounchout("punchout");
+
+                                   senddatatoserver("punchin");
                                }
                            })
 
@@ -328,8 +374,8 @@ public class NotificationReceiverActivity extends AppCompatActivity
                            .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
                                public void onClick(DialogInterface dialog, int which) {
                                    // Continue with delete operation
-                                   punchinouttext.setText("Punch In");
-                                   new LocalData(getApplicationContext()).setpunchinandpounchout("punchin");
+
+                                   senddatatoserver("punchout");
                                }
                            })
 
@@ -506,7 +552,7 @@ public class NotificationReceiverActivity extends AppCompatActivity
                                 .strokeWidth(0f)
                                 .fillColor(0x5500ff00));
 
-                        Toast.makeText(getApplicationContext(),"Already Added",Toast.LENGTH_LONG).show();
+                       // Toast.makeText(getApplicationContext(),"Already Added",Toast.LENGTH_LONG).show();
                     }
 
                 }
@@ -514,7 +560,7 @@ public class NotificationReceiverActivity extends AppCompatActivity
 
                     if (!location.equals(new LocalData(getApplicationContext()).getuserselctedlocation())) {
 
-
+                        requestLocationUpdates();
 
                     mMap.clear();
 
@@ -560,7 +606,7 @@ public class NotificationReceiverActivity extends AppCompatActivity
                                 .fillColor(0x5500ff00));
 
 
-                        Toast.makeText(getApplicationContext(),"Already Added",Toast.LENGTH_LONG).show();
+                       // Toast.makeText(getApplicationContext(),"Already Added",Toast.LENGTH_LONG).show();
                     }
 
                 }
@@ -611,7 +657,7 @@ public class NotificationReceiverActivity extends AppCompatActivity
                                 .radius(Constants.GEOFENCE_RADIUS_HMCO)
                                 .strokeWidth(0f)
                                 .fillColor(0x5500ff00));
-                        Toast.makeText(getApplicationContext(),"Already Added",Toast.LENGTH_LONG).show();
+                      //  Toast.makeText(getApplicationContext(),"Already Added",Toast.LENGTH_LONG).show();
                     }
 
                 }
@@ -626,12 +672,7 @@ public class NotificationReceiverActivity extends AppCompatActivity
 
         });
 
-        // for background location update
 
-        buildGoogleApiClient();
-
-
-        //
 
 
     }
@@ -742,10 +783,12 @@ public class NotificationReceiverActivity extends AppCompatActivity
     @Override
     public void onLocationChanged(Location location) {
         LatLng latLng = new LatLng(location.getLatitude(), location.getLongitude());
+        Log.wtf("CurrentLocation",latLng.toString());
         CameraUpdate cameraUpdate = CameraUpdateFactory.newLatLngZoom(latLng, 15);
         mMap.animateCamera(cameraUpdate);
         locationManager.removeUpdates(this);
 
+        usercurrentlocation = latLng;
         //drawing circle
 
 
@@ -1129,8 +1172,8 @@ public class NotificationReceiverActivity extends AppCompatActivity
 
                      // Set the expiration duration of the geofence. This geofence gets automatically
                      // removed after this period of time.
-                     .setExpirationDuration(Constants.GEOFENCE_EXPIRATION_IN_MILLISECONDS)
-
+                     //.setExpirationDuration(Constants.GEOFENCE_EXPIRATION_IN_MILLISECONDS)
+                     .setExpirationDuration(Geofence.NEVER_EXPIRE)
                      // Set the transition types of interest. Alerts are only generated for these
                      // transition. We track entry and exit transitions in this sample.
                      .setTransitionTypes(Geofence.GEOFENCE_TRANSITION_ENTER |
@@ -1158,8 +1201,8 @@ public class NotificationReceiverActivity extends AppCompatActivity
 
                      // Set the expiration duration of the geofence. This geofence gets automatically
                      // removed after this period of time.
-                     .setExpirationDuration(Constants.GEOFENCE_EXPIRATION_IN_MILLISECONDS)
-
+                     //.setExpirationDuration(Constants.GEOFENCE_EXPIRATION_IN_MILLISECONDS)
+                     .setExpirationDuration(Geofence.NEVER_EXPIRE)
                      // Set the transition types of interest. Alerts are only generated for these
                      // transition. We track entry and exit transitions in this sample.
                      .setTransitionTypes(Geofence.GEOFENCE_TRANSITION_ENTER |
@@ -1187,8 +1230,8 @@ public class NotificationReceiverActivity extends AppCompatActivity
 
                      // Set the expiration duration of the geofence. This geofence gets automatically
                      // removed after this period of time.
-                     .setExpirationDuration(Constants.GEOFENCE_EXPIRATION_IN_MILLISECONDS)
-
+                     //.setExpirationDuration(Constants.GEOFENCE_EXPIRATION_IN_MILLISECONDS)
+                     .setExpirationDuration(Geofence.NEVER_EXPIRE)
                      // Set the transition types of interest. Alerts are only generated for these
                      // transition. We track entry and exit transitions in this sample.
                      .setTransitionTypes(Geofence.GEOFENCE_TRANSITION_ENTER |
@@ -1464,7 +1507,107 @@ public class NotificationReceiverActivity extends AppCompatActivity
 
     //
 
+    public void senddatatoserver(String event)
+    {
+
+            String url = ServerUrl.sendData;
+            HashMap<String,String> params = new HashMap<>();
+            if(event.equals("punchin"))
+            {
+                SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+                String currentDateandTime = sdf.format(new Date());
+
+                params.put("in_punch", currentDateandTime);
+                params.put("out_punch","");
+            }
+            else
+            {
+                SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+                String currentDateandTime = sdf.format(new Date());
+
+                params.put("in_punch","");
+                params.put("out_punch",currentDateandTime);
+            }
+
+            params.put("ec_no","10046");
+            params.put("location",new LocalData(getApplicationContext()).getuserselctedlocation());
+            params.put("status","M");
+            params.put("coordinates","Latitude : "+usercurrentlocation.latitude+" , Longitude : "+usercurrentlocation.longitude);
 
 
+            RequestQueue requestQueue = Volley.newRequestQueue(getApplicationContext());
+            requestQueue.getCache().clear();
+
+
+            JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(Request.Method.POST, url, new JSONObject(params), new Response.Listener<JSONObject>() {
+
+                @Override
+                public void onResponse(JSONObject response) {
+//                    if(response.optString("status").equals("success")) {
+
+
+                        Log.wtf("geoattendecneresponse",response.toString());
+
+                       if(response.optString("msg").equals("Success"))
+                       {
+                          // Toast.makeText(getApplicationContext(),response.optString("msg"),Toast.LENGTH_SHORT).show();
+
+
+                        if(event.equals("punchin"))
+                           {
+                               new LocalData(getApplicationContext()).setpunchinandpounchout("punchout");
+                               punchinouttext.setText("Punch Out");
+
+                               String date = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(new Date());
+
+                               new LocalData(getApplicationContext()).setuserlastpunchinpunchoutdate(date);
+
+                           }
+
+                       }
+                       else if(response.optString("msg").equals("No update"))
+                       {
+
+                       }
+
+//                    }else
+//                    {
+//                        Toast.makeText(getApplicationContext(),response.optString("msg"),Toast.LENGTH_SHORT).show();
+//                    }
+                }
+
+            }, new Response.ErrorListener()
+            {
+                @Override
+                public void onErrorResponse(VolleyError error) {
+                    Log.wtf("Error",error.toString());
+                }
+            })
+            {
+                public Map<String, String> getHeaders() throws AuthFailureError
+                {
+                    HashMap<String, String> headers = new HashMap<String, String>();
+                    headers.put("Content-Type", "application/json; charset=utf-8");
+                    headers.put("User-agent", System.getProperty("http.agent"));
+                    return headers;
+                }
+            };
+
+            requestQueue.add(jsonObjectRequest);
+
+
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+
+        // for background location update
+
+        buildGoogleApiClient();
+
+
+        //
+    }
 }
 

@@ -20,7 +20,10 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.location.Location;
+import android.os.Handler;
+import android.os.Looper;
 import android.util.Log;
+import android.widget.Toast;
 
 import com.google.android.gms.location.LocationResult;
 
@@ -48,6 +51,9 @@ public class LocationUpdatesBroadcastReceiver extends BroadcastReceiver {
 
     @Override
     public void onReceive(Context context, Intent intent) {
+
+
+
         if (intent != null) {
             final String action = intent.getAction();
             if (ACTION_PROCESS_UPDATES.equals(action)) {

@@ -35,17 +35,29 @@ import android.text.TextUtils;
 import android.util.Log;
 import android.widget.Toast;
 
+import com.android.volley.AuthFailureError;
+import com.android.volley.Request;
+import com.android.volley.RequestQueue;
+import com.android.volley.Response;
+import com.android.volley.VolleyError;
+import com.android.volley.toolbox.JsonObjectRequest;
+import com.android.volley.toolbox.Volley;
 import com.google.android.gms.location.Geofence;
 import com.google.android.gms.location.GeofencingEvent;
 import com.google.android.gms.location.sample.geofencing.LocalData.LocalData;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 
+import org.json.JSONObject;
+
 import java.lang.reflect.Type;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Listener for geofence transition changes.
@@ -100,8 +112,10 @@ public class GeofenceTransitionsJobIntentService extends JobIntentService {
             String geofenceTransitionDetails = getGeofenceTransitionDetails(geofenceTransition,
                     triggeringGeofences);
 
+            String Latitude = String.valueOf(geofencingEvent.getTriggeringLocation().getLatitude());
+            String Longitude = String.valueOf(geofencingEvent.getTriggeringLocation().getLongitude());
             // Send notification and log the transition details.
-            sendNotification(geofenceTransitionDetails);
+            sendNotification(geofenceTransitionDetails,getTransitionString(geofenceTransition),Latitude,Longitude);
             Log.i(TAG, geofenceTransitionDetails);
         } else {
             // Log the error.
@@ -136,7 +150,7 @@ public class GeofenceTransitionsJobIntentService extends JobIntentService {
      * Posts a notification in the notification bar when a transition is detected.
      * If the user clicks the notification, control goes to the .
      */
-    private void sendNotification(String notificationDetails) {
+    private void sendNotification(String notificationDetails , String event,String Latitude,String Longitude) {
 
 
 
@@ -188,7 +202,7 @@ public class GeofenceTransitionsJobIntentService extends JobIntentService {
         NotificationCompat.Builder builder = new NotificationCompat.Builder(this,CHANNEL_ID);
 
         // Define the notification settings.
-        builder.setSmallIcon(R.drawable.ic_launcher)
+        builder.setSmallIcon(R.drawable.geofencing)
                 // In a real app, you may want to use a library like Volley
                 // to decode the Bitmap.
                 .setLargeIcon(BitmapFactory.decodeResource(getResources(),
@@ -255,7 +269,7 @@ public class GeofenceTransitionsJobIntentService extends JobIntentService {
 
 
 
-
+        senddatatoserver(event,Latitude,Longitude);
 
     }
 
@@ -275,4 +289,97 @@ public class GeofenceTransitionsJobIntentService extends JobIntentService {
                 return getString(R.string.unknown_geofence_transition);
         }
     }
+
+    // sending attendence data to server
+//
+    public void senddatatoserver(String event , String latitude , String longitude)
+    {
+
+        String url = ServerUrl.sendData;
+        HashMap<String,String> params = new HashMap<>();
+        if(event.equals("Entered"))
+        {
+            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+            String currentDateandTime = sdf.format(new Date());
+
+            params.put("in_punch", currentDateandTime);
+            params.put("out_punch","");
+        }
+        else
+        {
+            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+            String currentDateandTime = sdf.format(new Date());
+
+            params.put("in_punch","");
+            params.put("out_punch",currentDateandTime);
+        }
+
+        params.put("ec_no","10046");
+        params.put("location",new LocalData(getApplicationContext()).getuserselctedlocation());
+        params.put("status","G");
+        params.put("coordinates","Latitude : "+latitude+" , Longitude : "+longitude);
+
+
+        RequestQueue requestQueue = Volley.newRequestQueue(getApplicationContext());
+        requestQueue.getCache().clear();
+
+
+        JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(Request.Method.POST, url, new JSONObject(params), new Response.Listener<JSONObject>() {
+
+            @Override
+            public void onResponse(JSONObject response) {
+
+                Log.wtf("geoattendecneresponse",response.toString());
+
+                if(response.optString("msg").equals("Success"))
+                {
+                    //Toast.makeText(getApplicationContext(),response.optString("msg"),Toast.LENGTH_SHORT).show();
+
+
+                    if(event.equals("Entered"))
+                    {
+                        new LocalData(getApplicationContext()).setpunchinandpounchout("punchout");
+
+
+
+
+                    }
+
+                }
+                else if(response.optString("msg").equals("No update"))
+                {
+
+                }
+
+            }
+
+        }, new Response.ErrorListener()
+        {
+            @Override
+            public void onErrorResponse(VolleyError error) {
+                Log.wtf("Error",error.toString());
+            }
+        })
+        {
+            public Map<String, String> getHeaders() throws AuthFailureError
+            {
+                HashMap<String, String> headers = new HashMap<String, String>();
+                headers.put("Content-Type", "application/json; charset=utf-8");
+                headers.put("User-agent", System.getProperty("http.agent"));
+                return headers;
+            }
+        };
+
+        requestQueue.add(jsonObjectRequest);
+
+
+    }
+
+
+
+    //
+
+
+
+
 }

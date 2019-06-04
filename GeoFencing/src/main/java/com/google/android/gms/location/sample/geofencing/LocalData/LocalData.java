@@ -56,13 +56,65 @@ public class LocalData {
         editor.apply();
     }
 
-
     public String getuserselctedlocation()
     {
         return  pref.getString("userselectedlocation","");
     }
 
 
+    public String getuserevent()
+    {
+        return  pref.getString("userevent","exit");
+    }
+
+    public void setuserevent(String event)
+    {
+        editor.putString("userevent",event);
+        editor.commit();
+        editor.apply();
+    }
+
+
+    public String getuserecno()
+    {
+        return  pref.getString("ecno","");
+    }
+
+    public void setuserecno(String event)
+    {
+        editor.putString("ecno",event);
+        editor.commit();
+        editor.apply();
+    }
+
+
+
+    public String setuserlocation()
+    {
+        return  pref.getString("userlocation","");
+    }
+
+    public void getuserlocation(String event)
+    {
+        editor.putString("userlocation",event);
+        editor.commit();
+        editor.apply();
+    }
+
+
+    //
+
+    public String getuserlastpunchinpunchoutdate()
+    {
+        return  pref.getString("userlastpunchinoutdate","");
+    }
+
+    public void setuserlastpunchinpunchoutdate(String date)
+    {
+        editor.putString("userlastpunchinoutdate",date);
+        editor.commit();
+        editor.apply();
+    }
 
 
 }

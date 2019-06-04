@@ -151,7 +151,7 @@
             android:paddingLeft="10dp"
             android:alpha="0.6"
             android:background="@drawable/roundedbutton"
-            android:visibility="visible"
+            android:visibility="gone"
             android:layout_marginTop="5dp"
             android:textColor="#FFFFFF"
             android:id="@+id/remove_geofences_button"
