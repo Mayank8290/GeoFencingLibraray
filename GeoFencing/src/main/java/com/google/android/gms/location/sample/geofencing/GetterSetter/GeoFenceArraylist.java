@@ -1,10 +1,21 @@
-package com.google.android.gms.location.sample.geofencing;
+package com.google.android.gms.location.sample.geofencing.GetterSetter;
 
 public class GeoFenceArraylist {
 
     String name;
     String time;
     String event;
+    String provider;
+
+    public String getProvider() {
+        return provider;
+    }
+
+    public void setProvider(String provider) {
+        this.provider = provider;
+    }
+
+
 
     public String getName() {
         return name;

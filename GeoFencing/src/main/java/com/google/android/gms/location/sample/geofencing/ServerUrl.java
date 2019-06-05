@@ -15,6 +15,7 @@ public class ServerUrl {
     public static String sendData = "http://103.247.208.216/EmployeeAppVapt1/app/Attendance/Geo/Update";
 
 
+    public static String getthelocation = "http://103.247.208.216/EmployeeAppVapt1/app/Attendance/Geo/Location";
 
 
 

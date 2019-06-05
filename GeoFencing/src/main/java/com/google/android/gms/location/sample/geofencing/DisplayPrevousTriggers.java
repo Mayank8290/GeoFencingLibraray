@@ -1,6 +1,5 @@
 package com.google.android.gms.location.sample.geofencing;
 
-import android.app.Activity;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.os.Bundle;
@@ -15,6 +14,7 @@ import android.view.ViewGroup;
 import android.view.Window;
 import android.widget.Toast;
 
+import com.google.android.gms.location.sample.geofencing.GetterSetter.GeoFenceArraylist;
 import com.google.android.gms.location.sample.geofencing.LocalData.LocalData;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;

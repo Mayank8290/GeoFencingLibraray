@@ -6,6 +6,7 @@ import com.android.volley.Request;
 import com.android.volley.RequestQueue;
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
+import com.android.volley.toolbox.JsonArrayRequest;
 import com.android.volley.toolbox.JsonObjectRequest;
 import com.android.volley.toolbox.Volley;
 import com.google.android.gms.common.ConnectionResult;
@@ -23,6 +24,7 @@ import com.google.android.gms.location.LocationSettingsStates;
 import com.google.android.gms.location.LocationSettingsStatusCodes;
 import com.google.android.gms.location.sample.geofencing.BackgroundLocationUpdate.LocationRequestHelper;
 import com.google.android.gms.location.sample.geofencing.BackgroundLocationUpdate.LocationUpdatesBroadcastReceiver;
+import com.google.android.gms.location.sample.geofencing.GetterSetter.LocationDataGetterSetter;
 import com.google.android.gms.location.sample.geofencing.LocalData.LocalData;
 import com.google.android.gms.maps.CameraUpdate;
 import com.google.android.gms.maps.CameraUpdateFactory;
@@ -43,6 +45,7 @@ import android.app.AlertDialog;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
+import android.app.ProgressDialog;
 import android.app.TaskStackBuilder;
 
 import android.content.Context;
@@ -55,6 +58,8 @@ import android.graphics.Color;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -84,6 +89,7 @@ import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.text.SimpleDateFormat;
@@ -186,6 +192,10 @@ public class NotificationReceiverActivity extends AppCompatActivity
 
     private static final int REQUEST_PERMISSIONS_REQUEST_CODE = 34;
 
+
+    ArrayList<LocationDataGetterSetter> locationdata = new ArrayList<>();
+
+
     @Override
     public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
 
@@ -264,7 +274,7 @@ public class NotificationReceiverActivity extends AppCompatActivity
     //
 
     Spinner spinner;
-
+    ArrayList<String> contacts = new ArrayList<>();
 
     TextView punchinouttext;
 
@@ -282,18 +292,21 @@ public class NotificationReceiverActivity extends AppCompatActivity
             String Ecno = getIntent().getStringExtra("ecno");
             String userLocation = getIntent().getStringExtra("location");
 
-            Toast.makeText(getApplicationContext(),"Ec No : "+Ecno+", Location : "+userLocation,Toast.LENGTH_SHORT).show();
+
+            new LocalData(getApplicationContext()).setuserecno(Ecno);
+
+           // Toast.makeText(getApplicationContext(),"Ec No : "+Ecno+", Location : "+userLocation,Toast.LENGTH_SHORT).show();
 
         }
         catch (Exception e)
         {
-            Toast.makeText(getApplicationContext(),"Data Not Getting",Toast.LENGTH_SHORT).show();
+            //Toast.makeText(getApplicationContext(),"Data Not Getting",Toast.LENGTH_SHORT).show();
         }
 
 
         // data getting end
 
-       // getSupportActionBar().hide();
+        //getSupportActionBar().hide();
 
         punchinoutbutton = (LinearLayout) findViewById(R.id.punchinoutbutton);
 
@@ -322,6 +335,7 @@ public class NotificationReceiverActivity extends AppCompatActivity
         else
         {
             new LocalData(getApplicationContext()).setpunchinandpounchout("punchin");
+            new LocalData(getApplicationContext()).setuserlastpunchinpunchoutdate("");
         }
 
         openspinnerimage = (ImageView)findViewById(R.id.openspinnerimage);
@@ -338,6 +352,12 @@ public class NotificationReceiverActivity extends AppCompatActivity
 
                if(new LocalData(getApplicationContext()).getpunchinandpounchout().equals("punchin"))
                {
+
+
+
+                   //
+
+
                    // alert user for punch
 
                    new AlertDialog.Builder(NotificationReceiverActivity.this)
@@ -365,27 +385,39 @@ public class NotificationReceiverActivity extends AppCompatActivity
                }
                else if (new LocalData(getApplicationContext()).getpunchinandpounchout().equals("punchout"))
                {
-                   new AlertDialog.Builder(NotificationReceiverActivity.this)
-                           .setTitle("Punch Out")
-                           .setMessage("Are you sure you want to punch out?")
 
-                           // Specifying a listener allows you to take an action before dismissing the dialog.
-                           // The dialog is automatically dismissed when a dialog button is clicked.
-                           .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
-                               public void onClick(DialogInterface dialog, int which) {
-                                   // Continue with delete operation
+                   // if punch in already done
 
-                                   senddatatoserver("punchout");
-                               }
-                           })
+                   LinearLayout b = (LinearLayout)v;
+                   TextView buttonText = (TextView) b.getChildAt(1);
+                   String text = buttonText.getText().toString();
+                   if(text.equals("Punch In"))
+                   {
+                       Toast.makeText(getApplicationContext(),"Punch In Already Done From your location",Toast.LENGTH_SHORT).show();
+                   }
+                   else {
+                       new AlertDialog.Builder(NotificationReceiverActivity.this)
+                               .setTitle("Punch Out")
+                               .setMessage("Are you sure you want to punch out?")
 
-                           // A null listener allows the button to dismiss the dialog and take no further action.
-                           .setNegativeButton(android.R.string.no, null)
-                           .setIcon(android.R.drawable.ic_dialog_alert)
-                           .show();
+                               // Specifying a listener allows you to take an action before dismissing the dialog.
+                               // The dialog is automatically dismissed when a dialog button is clicked.
+                               .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
+                                   public void onClick(DialogInterface dialog, int which) {
+                                       // Continue with delete operation
+
+                                       senddatatoserver("punchout");
+                                   }
+                               })
+
+                               // A null listener allows the button to dismiss the dialog and take no further action.
+                               .setNegativeButton(android.R.string.no, null)
+                               .setIcon(android.R.drawable.ic_dialog_alert)
+                               .show();
+                   }
 
 
-               }
+                   }
 
             }
         });
@@ -397,7 +429,7 @@ public class NotificationReceiverActivity extends AppCompatActivity
         locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
 
 
-        //turnuserlocationon();
+
 
 
 
@@ -444,45 +476,6 @@ public class NotificationReceiverActivity extends AppCompatActivity
 
 
 
-        ArrayList<String> contacts = new ArrayList<>();
-        contacts.add("Select Location");
-       contacts.add("HO , The Grand Hotel");
-       contacts.add("HMCI , Sohna Road");
-       contacts.add("HMCO");
-
-//        GeoFenceArraylist data4 = new GeoFenceArraylist();
-//        data4.setName("Halor Plant");
-//        contacts.add(data4);
-//
-//        GeoFenceArraylist data5 = new GeoFenceArraylist();
-//        data5.setName("Gurgaon Plant");
-//        contacts.add(data5);
-
-
-        ArrayAdapter<String> adapter =
-                new ArrayAdapter<String>(getApplicationContext(),  R.layout.simple_spinner_item, contacts);
-        adapter.setDropDownViewResource( android.R.layout.simple_spinner_dropdown_item);
-
-        spinner.setAdapter(adapter);
-
-
-        // set the user choosed to the spinner
-
-
-        if(new LocalData(getApplicationContext()).getuserselctedlocation().equals("HO , The Grand Hotel"))
-        {
-           spinner.setSelection(1);
-        }
-        else if(new LocalData(getApplicationContext()).getuserselctedlocation().equals("HMCI , Sohna Road"))
-        {
-            spinner.setSelection(2);
-        }
-        else if(new LocalData(getApplicationContext()).getuserselctedlocation().equals("HMCO"))
-        {
-            spinner.setSelection(3);
-        }
-
-        //
 
 
         spinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
@@ -490,43 +483,32 @@ public class NotificationReceiverActivity extends AppCompatActivity
             public void onItemSelected(AdapterView<?> parentView, View selectedItemView, int position, long id) {
                 // your code here
 
-                String location = contacts.get(position);
+                if(position > 0) {
 
-                if(position > 0)
-                {
-                    //Toast.makeText(getApplicationContext(),contacts.get(position),Toast.LENGTH_LONG).show();
-                    //mAddGeofencesButton.setVisibility(View.VISIBLE);
-
+                    String location = locationdata.get(position - 1).getLocation();
                     mGeofenceList.clear();
 
-
-
-                    // Toast.makeText(getApplicationContext(),new LocalData(getApplicationContext()).getuserselctedlocation(),Toast.LENGTH_LONG).show();
-
-                }
-
-
-
-                if(position == 1) {
-
                     if (!location.equals(new LocalData(getApplicationContext()).getuserselctedlocation())) {
+
+                    populateGeofenceList(position - 1);
                     mMap.clear();
 
-                    LatLng geofencelatLng = new LatLng(28.5388096, 77.1514862);
-
+                    // drawing a circle on the map
+                    LatLng geofencelatLng = new LatLng(Double.valueOf(locationdata.get(position - 1).getLatitude()), Double.valueOf(locationdata.get(position - 1).getLongitude()));
                     mMap.addCircle(new CircleOptions()
                             .center(geofencelatLng)
-                            .radius(Constants.GEOFENCE_RADIUS_HO_THE_GRAND)
+                            .radius(Float.valueOf(locationdata.get(position - 1).getRadius()))
                             .strokeWidth(0f)
                             .fillColor(0x5500ff00));
-
-
                     CameraUpdate cameraUpdate = CameraUpdateFactory.newLatLngZoom(geofencelatLng, 15);
                     mMap.animateCamera(cameraUpdate);
                     locationManager.removeUpdates(NotificationReceiverActivity.this);
 
+                    //setting user selected data to locaL
                     new LocalData(getApplicationContext()).setuserselctedlocation(location);
-                    populateGeofenceList();
+                    new LocalData(getApplicationContext()).setuserselectedlongitude(locationdata.get(position-1).getLongitude());
+                    new LocalData(getApplicationContext()).setuserselectedlatitude(locationdata.get(position-1).getLatitude());
+                    new LocalData(getApplicationContext()).setuserselectedradius(locationdata.get(position-1).getRadius());
 
                     if (!checkPermissions()) {
                         mPendingGeofenceTask = NotificationReceiverActivity.PendingGeofenceTask.ADD;
@@ -539,128 +521,184 @@ public class NotificationReceiverActivity extends AppCompatActivity
                     } else {
                         addGeofences();
                     }
-                }
-                else
-                    {
-                        mMap.clear();
-
-                        LatLng geofencelatLng = new LatLng(28.5388096, 77.1514862);
-
-                        mMap.addCircle(new CircleOptions()
-                                .center(geofencelatLng)
-                                .radius(Constants.GEOFENCE_RADIUS_HO_THE_GRAND)
-                                .strokeWidth(0f)
-                                .fillColor(0x5500ff00));
-
-                       // Toast.makeText(getApplicationContext(),"Already Added",Toast.LENGTH_LONG).show();
-                    }
-
-                }
-                else if(position == 2) {
-
-                    if (!location.equals(new LocalData(getApplicationContext()).getuserselctedlocation())) {
 
                         requestLocationUpdates();
 
-                    mMap.clear();
-
-                    LatLng geofencelatLng = new LatLng(28.412402603746372, 77.0433149267526);
-
-                    mMap.addCircle(new CircleOptions()
-                            .center(geofencelatLng)
-                            .radius(Constants.GEOFENCE_RADIUS_IN_METERS)
-                            .strokeWidth(0f)
-                            .fillColor(0x5500ff00));
-
-                    CameraUpdate cameraUpdate = CameraUpdateFactory.newLatLngZoom(geofencelatLng, 15);
-                    mMap.animateCamera(cameraUpdate);
-                    locationManager.removeUpdates(NotificationReceiverActivity.this);
-
-                    new LocalData(getApplicationContext()).setuserselctedlocation(location);
-                    populateGeofenceList();
-
-
-                    if (!checkPermissions()) {
-                        mPendingGeofenceTask = NotificationReceiverActivity.PendingGeofenceTask.ADD;
-                        requestPermissions();
-                        return;
-                    }
-                    if (getGeofencesAdded()) {
-                        removeGeofences();
-                        addGeofences();
-                    } else {
-                        addGeofences();
+                     }
+                else
+                    {
+                        mMap.clear();
+                        LatLng geofencelatLng = new LatLng(Double.valueOf(locationdata.get(position-1).getLatitude()), Double.valueOf(locationdata.get(position-1).getLongitude()));
+                        mMap.addCircle(new CircleOptions()
+                                .center(geofencelatLng)
+                                .radius(Float.valueOf(locationdata.get(position-1).getRadius()))
+                                .strokeWidth(0f)
+                                .fillColor(0x5500ff00));
+                        // Toast.makeText(getApplicationContext(),"Already Added",Toast.LENGTH_LONG).show();
                     }
 
                 }
                 else
-                    {
-                        mMap.clear();
-
-                        LatLng geofencelatLng = new LatLng(28.412402603746372, 77.0433149267526);
-
-                        mMap.addCircle(new CircleOptions()
-                                .center(geofencelatLng)
-                                .radius(Constants.GEOFENCE_RADIUS_IN_METERS)
-                                .strokeWidth(0f)
-                                .fillColor(0x5500ff00));
-
-
-                       // Toast.makeText(getApplicationContext(),"Already Added",Toast.LENGTH_LONG).show();
-                    }
+                {
 
                 }
-                else if(position == 3) {
-
-                    if (!location.equals(new LocalData(getApplicationContext()).getuserselctedlocation())) {
 
 
 
-                    mMap.clear();
-
-                    LatLng geofencelatLng = new LatLng(28.53988, 77.15401);
-
-                    mMap.addCircle(new CircleOptions()
-                            .center(geofencelatLng)
-                            .radius(Constants.GEOFENCE_RADIUS_HMCO)
-                            .strokeWidth(0f)
-                            .fillColor(0x5500ff00));
-
-
-                    CameraUpdate cameraUpdate = CameraUpdateFactory.newLatLngZoom(geofencelatLng, 15);
-                    mMap.animateCamera(cameraUpdate);
-                    locationManager.removeUpdates(NotificationReceiverActivity.this);
-
-                    new LocalData(getApplicationContext()).setuserselctedlocation(location);
-                    populateGeofenceList();
-
-                    if (!checkPermissions()) {
-                        mPendingGeofenceTask = NotificationReceiverActivity.PendingGeofenceTask.ADD;
-                        requestPermissions();
-                        return;
-                    }
-                    if (getGeofencesAdded()) {
-                        removeGeofences();
-                        addGeofences();
-                    } else {
-                        addGeofences();
-                    }
-                }
-                else
-                    {
-                        mMap.clear();
-
-                        LatLng geofencelatLng = new LatLng(28.53988, 77.15401);
-
-                        mMap.addCircle(new CircleOptions()
-                                .center(geofencelatLng)
-                                .radius(Constants.GEOFENCE_RADIUS_HMCO)
-                                .strokeWidth(0f)
-                                .fillColor(0x5500ff00));
-                      //  Toast.makeText(getApplicationContext(),"Already Added",Toast.LENGTH_LONG).show();
-                    }
-
-                }
+//                if(position == 1) {
+//
+//                    if (!location.equals(new LocalData(getApplicationContext()).getuserselctedlocation())) {
+//                    mMap.clear();
+//
+//                    LatLng geofencelatLng = new LatLng(28.5388096, 77.1514862);
+//
+//                    mMap.addCircle(new CircleOptions()
+//                            .center(geofencelatLng)
+//                            .radius(Constants.GEOFENCE_RADIUS_HO_THE_GRAND)
+//                            .strokeWidth(0f)
+//                            .fillColor(0x5500ff00));
+//
+//
+//                    CameraUpdate cameraUpdate = CameraUpdateFactory.newLatLngZoom(geofencelatLng, 15);
+//                    mMap.animateCamera(cameraUpdate);
+//                    locationManager.removeUpdates(NotificationReceiverActivity.this);
+//
+//                    new LocalData(getApplicationContext()).setuserselctedlocation(location);
+//                    populateGeofenceList();
+//
+//                    if (!checkPermissions()) {
+//                        mPendingGeofenceTask = NotificationReceiverActivity.PendingGeofenceTask.ADD;
+//                        requestPermissions();
+//                        return;
+//                    }
+//                    if (getGeofencesAdded()) {
+//                        removeGeofences();
+//                        addGeofences();
+//                    } else {
+//                        addGeofences();
+//                    }
+//                }
+//                else
+//                    {
+//                        mMap.clear();
+//
+//                        LatLng geofencelatLng = new LatLng(28.5388096, 77.1514862);
+//
+//                        mMap.addCircle(new CircleOptions()
+//                                .center(geofencelatLng)
+//                                .radius(Constants.GEOFENCE_RADIUS_HO_THE_GRAND)
+//                                .strokeWidth(0f)
+//                                .fillColor(0x5500ff00));
+//
+//                       // Toast.makeText(getApplicationContext(),"Already Added",Toast.LENGTH_LONG).show();
+//                    }
+//
+//                }
+//                else if(position == 2) {
+//
+//                    if (!location.equals(new LocalData(getApplicationContext()).getuserselctedlocation())) {
+//
+//                        requestLocationUpdates();
+//
+//                    mMap.clear();
+//
+//                    LatLng geofencelatLng = new LatLng(28.412402603746372, 77.0433149267526);
+//
+//                    mMap.addCircle(new CircleOptions()
+//                            .center(geofencelatLng)
+//                            .radius(Constants.GEOFENCE_RADIUS_IN_METERS)
+//                            .strokeWidth(0f)
+//                            .fillColor(0x5500ff00));
+//
+//                    CameraUpdate cameraUpdate = CameraUpdateFactory.newLatLngZoom(geofencelatLng, 15);
+//                    mMap.animateCamera(cameraUpdate);
+//                    locationManager.removeUpdates(NotificationReceiverActivity.this);
+//
+//                    new LocalData(getApplicationContext()).setuserselctedlocation(location);
+//                    populateGeofenceList();
+//
+//
+//                    if (!checkPermissions()) {
+//                        mPendingGeofenceTask = NotificationReceiverActivity.PendingGeofenceTask.ADD;
+//                        requestPermissions();
+//                        return;
+//                    }
+//                    if (getGeofencesAdded()) {
+//                        removeGeofences();
+//                        addGeofences();
+//                    } else {
+//                        addGeofences();
+//                    }
+//
+//                }
+//                else
+//                    {
+//                        mMap.clear();
+//
+//                        LatLng geofencelatLng = new LatLng(28.412402603746372, 77.0433149267526);
+//
+//                        mMap.addCircle(new CircleOptions()
+//                                .center(geofencelatLng)
+//                                .radius(Constants.GEOFENCE_RADIUS_IN_METERS)
+//                                .strokeWidth(0f)
+//                                .fillColor(0x5500ff00));
+//
+//
+//                       // Toast.makeText(getApplicationContext(),"Already Added",Toast.LENGTH_LONG).show();
+//                    }
+//
+//                }
+//                else if(position == 3) {
+//
+//                    if (!location.equals(new LocalData(getApplicationContext()).getuserselctedlocation())) {
+//
+//
+//
+//                    mMap.clear();
+//
+//                    LatLng geofencelatLng = new LatLng(28.53988, 77.15401);
+//
+//                    mMap.addCircle(new CircleOptions()
+//                            .center(geofencelatLng)
+//                            .radius(Constants.GEOFENCE_RADIUS_HMCO)
+//                            .strokeWidth(0f)
+//                            .fillColor(0x5500ff00));
+//
+//
+//                    CameraUpdate cameraUpdate = CameraUpdateFactory.newLatLngZoom(geofencelatLng, 15);
+//                    mMap.animateCamera(cameraUpdate);
+//                    locationManager.removeUpdates(NotificationReceiverActivity.this);
+//
+//                    new LocalData(getApplicationContext()).setuserselctedlocation(location);
+//                    populateGeofenceList();
+//
+//                    if (!checkPermissions()) {
+//                        mPendingGeofenceTask = NotificationReceiverActivity.PendingGeofenceTask.ADD;
+//                        requestPermissions();
+//                        return;
+//                    }
+//                    if (getGeofencesAdded()) {
+//                        removeGeofences();
+//                        addGeofences();
+//                    } else {
+//                        addGeofences();
+//                    }
+//                }
+//                else
+//                    {
+//                        mMap.clear();
+//
+//                        LatLng geofencelatLng = new LatLng(28.53988, 77.15401);
+//
+//                        mMap.addCircle(new CircleOptions()
+//                                .center(geofencelatLng)
+//                                .radius(Constants.GEOFENCE_RADIUS_HMCO)
+//                                .strokeWidth(0f)
+//                                .fillColor(0x5500ff00));
+//                      //  Toast.makeText(getApplicationContext(),"Already Added",Toast.LENGTH_LONG).show();
+//                    }
+//
+//                }
 
 
             }
@@ -673,7 +711,7 @@ public class NotificationReceiverActivity extends AppCompatActivity
         });
 
 
-
+       // getthelocation();
 
     }
 
@@ -955,7 +993,7 @@ public class NotificationReceiverActivity extends AppCompatActivity
                 switch (resultCode) {
                     case Activity.RESULT_OK:
                         // All required changes were successfully made
-                        Toast.makeText(NotificationReceiverActivity.this,states.isLocationPresent()+"",Toast.LENGTH_SHORT).show();
+                        //Toast.makeText(NotificationReceiverActivity.this,states.isLocationPresent()+"",Toast.LENGTH_SHORT).show();
                         if (checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
                             // TODO: Consider calling
                             //    Activity#requestPermissions
@@ -1022,7 +1060,41 @@ public class NotificationReceiverActivity extends AppCompatActivity
             turnonlocationtwo();
             performPendingGeofenceTask();
         }
+
+        if(!isNetworkAvailable())
+        {
+            displayinternetnotconnected();
+        }
+        else
+        {
+            getthelocation();
+        }
+
     }
+
+
+    public void displayinternetnotconnected()
+    {
+        Snackbar.make(findViewById(R.id.layout), "Internet is not Connected", Snackbar.LENGTH_INDEFINITE)
+                .setAction("Refresh", new View.OnClickListener() {
+                    @Override
+                    public void onClick(View view) {
+
+                       if(!isNetworkAvailable())
+                       {
+                           displayinternetnotconnected();
+                       }
+                       else
+                       {
+                           getthelocation();
+                       }
+
+                    }
+                })
+                .setActionTextColor(getResources().getColor(android.R.color.holo_red_light ))
+                .show();
+    }
+
 
     /**
      * Builds and returns a GeofencingRequest. Specifies the list of geofences to be monitored.
@@ -1151,96 +1223,132 @@ public class NotificationReceiverActivity extends AppCompatActivity
      * This sample hard codes geofence data. A real app might dynamically create geofences based on
      * the user's location.
      */
-    private void populateGeofenceList() {
+    private void populateGeofenceList(int postion) {
 
 
-     if(new LocalData(getApplicationContext()).getuserselctedlocation().equals("HO , The Grand Hotel"))
-     {
-         for (Map.Entry<String, LatLng> entry : Constants.HO_THE_GRAND.entrySet()) {
+     // setting geo fence dynamically
 
-             mGeofenceList.add(new Geofence.Builder()
-                     // Set the request ID of the geofence. This is a string to identify this
-                     // geofence.
-                     .setRequestId(entry.getKey())
+        mGeofenceList.add(new Geofence.Builder()
+                // Set the request ID of the geofence. This is a string to identify this
+                // geofence.
+                .setRequestId(String.valueOf(locationdata.get(postion).getLocation()))
 
-                     // Set the circular region of this geofence.
-                     .setCircularRegion(
-                             entry.getValue().latitude,
-                             entry.getValue().longitude,
-                             Constants.GEOFENCE_RADIUS_HO_THE_GRAND
-                     )
+                // Set the circular region of this geofence.
+                .setCircularRegion(
+                        Double.valueOf(locationdata.get(postion).getLatitude()),
+                        Double.valueOf(locationdata.get(postion).getLongitude()),
+                        Float.valueOf(locationdata.get(postion).getRadius())
+                )
 
-                     // Set the expiration duration of the geofence. This geofence gets automatically
-                     // removed after this period of time.
-                     //.setExpirationDuration(Constants.GEOFENCE_EXPIRATION_IN_MILLISECONDS)
-                     .setExpirationDuration(Geofence.NEVER_EXPIRE)
-                     // Set the transition types of interest. Alerts are only generated for these
-                     // transition. We track entry and exit transitions in this sample.
-                     .setTransitionTypes(Geofence.GEOFENCE_TRANSITION_ENTER |
-                             Geofence.GEOFENCE_TRANSITION_EXIT)
+                // Set the expiration duration of the geofence. This geofence gets automatically
+                // removed after this period of time.
+                //.setExpirationDuration(Constants.GEOFENCE_EXPIRATION_IN_MILLISECONDS)
+                .setExpirationDuration(Geofence.NEVER_EXPIRE)
+                // Set the transition types of interest. Alerts are only generated for these
+                // transition. We track entry and exit transitions in this sample.
+                .setTransitionTypes(Geofence.GEOFENCE_TRANSITION_ENTER |
+                        Geofence.GEOFENCE_TRANSITION_EXIT)
 
-                     // Create the geofence.
-                     .build());
-         }
-     }
-     else if(new LocalData(getApplicationContext()).getuserselctedlocation().equals("HMCI , Sohna Road"))
-     {
-         for (Map.Entry<String, LatLng> entry : Constants.HMCI_SOHNA_ROAD.entrySet()) {
+                // Create the geofence.
+                .build());
 
-             mGeofenceList.add(new Geofence.Builder()
-                     // Set the request ID of the geofence. This is a string to identify this
-                     // geofence.
-                     .setRequestId(entry.getKey())
 
-                     // Set the circular region of this geofence.
-                     .setCircularRegion(
-                             entry.getValue().latitude,
-                             entry.getValue().longitude,
-                             Constants.GEOFENCE_RADIUS_IN_METERS
-                     )
+     //
 
-                     // Set the expiration duration of the geofence. This geofence gets automatically
-                     // removed after this period of time.
-                     //.setExpirationDuration(Constants.GEOFENCE_EXPIRATION_IN_MILLISECONDS)
-                     .setExpirationDuration(Geofence.NEVER_EXPIRE)
-                     // Set the transition types of interest. Alerts are only generated for these
-                     // transition. We track entry and exit transitions in this sample.
-                     .setTransitionTypes(Geofence.GEOFENCE_TRANSITION_ENTER |
-                             Geofence.GEOFENCE_TRANSITION_EXIT)
 
-                     // Create the geofence.
-                     .build());
-         }
-     }
-     else if(new LocalData(getApplicationContext()).getuserselctedlocation().equals("HMCO"))
-     {
-         for (Map.Entry<String, LatLng> entry : Constants.HMCO.entrySet()) {
 
-             mGeofenceList.add(new Geofence.Builder()
-                     // Set the request ID of the geofence. This is a string to identify this
-                     // geofence.
-                     .setRequestId(entry.getKey())
 
-                     // Set the circular region of this geofence.
-                     .setCircularRegion(
-                             entry.getValue().latitude,
-                             entry.getValue().longitude,
-                             Constants.GEOFENCE_RADIUS_HMCO
-                     )
 
-                     // Set the expiration duration of the geofence. This geofence gets automatically
-                     // removed after this period of time.
-                     //.setExpirationDuration(Constants.GEOFENCE_EXPIRATION_IN_MILLISECONDS)
-                     .setExpirationDuration(Geofence.NEVER_EXPIRE)
-                     // Set the transition types of interest. Alerts are only generated for these
-                     // transition. We track entry and exit transitions in this sample.
-                     .setTransitionTypes(Geofence.GEOFENCE_TRANSITION_ENTER |
-                             Geofence.GEOFENCE_TRANSITION_EXIT)
 
-                     // Create the geofence.
-                     .build());
-         }
-     }
+
+
+//     if(new LocalData(getApplicationContext()).getuserselctedlocation().equals("HO , The Grand Hotel"))
+//     {
+//         for (Map.Entry<String, LatLng> entry : Constants.HO_THE_GRAND.entrySet()) {
+//
+//             mGeofenceList.add(new Geofence.Builder()
+//                     // Set the request ID of the geofence. This is a string to identify this
+//                     // geofence.
+//                     .setRequestId(entry.getKey())
+//
+//                     // Set the circular region of this geofence.
+//                     .setCircularRegion(
+//                             entry.getValue().latitude,
+//                             entry.getValue().longitude,
+//                             Constants.GEOFENCE_RADIUS_HO_THE_GRAND
+//                     )
+//
+//                     // Set the expiration duration of the geofence. This geofence gets automatically
+//                     // removed after this period of time.
+//                     //.setExpirationDuration(Constants.GEOFENCE_EXPIRATION_IN_MILLISECONDS)
+//                     .setExpirationDuration(Geofence.NEVER_EXPIRE)
+//                     // Set the transition types of interest. Alerts are only generated for these
+//                     // transition. We track entry and exit transitions in this sample.
+//                     .setTransitionTypes(Geofence.GEOFENCE_TRANSITION_ENTER |
+//                             Geofence.GEOFENCE_TRANSITION_EXIT)
+//
+//                     // Create the geofence.
+//                     .build());
+//         }
+//     }
+//     else if(new LocalData(getApplicationContext()).getuserselctedlocation().equals("HMCI , Sohna Road"))
+//     {
+//         for (Map.Entry<String, LatLng> entry : Constants.HMCI_SOHNA_ROAD.entrySet()) {
+//
+//             mGeofenceList.add(new Geofence.Builder()
+//                     // Set the request ID of the geofence. This is a string to identify this
+//                     // geofence.
+//                     .setRequestId(entry.getKey())
+//
+//                     // Set the circular region of this geofence.
+//                     .setCircularRegion(
+//                             entry.getValue().latitude,
+//                             entry.getValue().longitude,
+//                             Constants.GEOFENCE_RADIUS_IN_METERS
+//                     )
+//
+//                     // Set the expiration duration of the geofence. This geofence gets automatically
+//                     // removed after this period of time.
+//                     //.setExpirationDuration(Constants.GEOFENCE_EXPIRATION_IN_MILLISECONDS)
+//                     .setExpirationDuration(Geofence.NEVER_EXPIRE)
+//                     // Set the transition types of interest. Alerts are only generated for these
+//                     // transition. We track entry and exit transitions in this sample.
+//                     .setTransitionTypes(Geofence.GEOFENCE_TRANSITION_ENTER |
+//                             Geofence.GEOFENCE_TRANSITION_EXIT)
+//
+//                     // Create the geofence.
+//                     .build());
+//         }
+//     }
+//     else if(new LocalData(getApplicationContext()).getuserselctedlocation().equals("HMCO"))
+//     {
+//         for (Map.Entry<String, LatLng> entry : Constants.HMCO.entrySet()) {
+//
+//             mGeofenceList.add(new Geofence.Builder()
+//                     // Set the request ID of the geofence. This is a string to identify this
+//                     // geofence.
+//                     .setRequestId(entry.getKey())
+//
+//                     // Set the circular region of this geofence.
+//                     .setCircularRegion(
+//                             entry.getValue().latitude,
+//                             entry.getValue().longitude,
+//                             Constants.GEOFENCE_RADIUS_HMCO
+//                     )
+//
+//                     // Set the expiration duration of the geofence. This geofence gets automatically
+//                     // removed after this period of time.
+//                     //.setExpirationDuration(Constants.GEOFENCE_EXPIRATION_IN_MILLISECONDS)
+//                     .setExpirationDuration(Geofence.NEVER_EXPIRE)
+//                     // Set the transition types of interest. Alerts are only generated for these
+//                     // transition. We track entry and exit transitions in this sample.
+//                     .setTransitionTypes(Geofence.GEOFENCE_TRANSITION_ENTER |
+//                             Geofence.GEOFENCE_TRANSITION_EXIT)
+//
+//                     // Create the geofence.
+//                     .build());
+//         }
+//     }
 
 
     }
@@ -1501,6 +1609,7 @@ public class NotificationReceiverActivity extends AppCompatActivity
     @Override
     protected void onResume() {
         super.onResume();
+        buildGoogleApiClient();
 //        getApplicationContext().registerReceiver(new GPScheck(), new IntentFilter(LocationManager.PROVIDERS_CHANGED_ACTION));
     }
 
@@ -1528,8 +1637,8 @@ public class NotificationReceiverActivity extends AppCompatActivity
                 params.put("in_punch","");
                 params.put("out_punch",currentDateandTime);
             }
-
-            params.put("ec_no","10046");
+            params.put("ec_no",new LocalData(getApplicationContext()).getuserecno());
+            //params.put("ec_no","10046");
             params.put("location",new LocalData(getApplicationContext()).getuserselctedlocation());
             params.put("status","M");
             params.put("coordinates","Latitude : "+usercurrentlocation.latitude+" , Longitude : "+usercurrentlocation.longitude);
@@ -1598,13 +1707,124 @@ public class NotificationReceiverActivity extends AppCompatActivity
 
     }
 
+
+
+    public void getthelocation()
+    {
+        ProgressDialog progress = new ProgressDialog(this);
+        progress.setTitle("Loading");
+        progress.setMessage("Wait while loading...");
+        progress.setCancelable(false); // disable dismiss by tapping outside of the dialog
+        progress.show();
+// To dismiss the dialog
+
+
+
+        String url = ServerUrl.getthelocation;
+        HashMap<String,String> params = new HashMap<>();
+
+
+        RequestQueue requestQueue = Volley.newRequestQueue(getApplicationContext());
+        requestQueue.getCache().clear();
+
+
+        JsonArrayRequest jsonObjectRequest = new JsonArrayRequest(Request.Method.POST, url, null, new Response.Listener<JSONArray>() {
+
+            @Override
+            public void onResponse(JSONArray response) {
+
+                Log.wtf("locationresponse",response.toString());
+                progress.dismiss();
+                for(int i=0;i<response.length();i++)
+                {
+                    JSONObject jsonObject = response.optJSONObject(i);
+
+                    LocationDataGetterSetter data = new LocationDataGetterSetter();
+                    data.setLatitude(jsonObject.optString("latitude"));
+                    data.setLocation(jsonObject.optString("location"));
+                    data.setLongitude(jsonObject.optString("longitude"));
+                    data.setRadius(jsonObject.optString("radius"));
+
+                    locationdata.add(data);
+                }
+
+
+
+                contacts.add("Select Location");
+                for(int i=0;i<locationdata.size();i++)
+                {
+                    contacts.add(locationdata.get(i).getLocation());
+
+
+
+
+
+                }
+
+
+
+                ArrayAdapter<String> adapter =
+                        new ArrayAdapter<String>(getApplicationContext(),  R.layout.simple_spinner_item, contacts);
+                adapter.setDropDownViewResource( android.R.layout.simple_spinner_dropdown_item);
+
+                spinner.setAdapter(adapter);
+
+
+                // set the user choosed to the spinner
+
+                spinner.setSelection(1);
+
+
+                for(int i=0;i<contacts.size();i++)
+                {
+                    if(new LocalData(getApplicationContext()).getuserselctedlocation().equals(contacts.get(i)))
+                    {
+                        spinner.setSelection(i);
+                    }
+
+                }
+
+
+                //
+
+
+
+            }
+
+        }, new Response.ErrorListener() {
+            @Override
+            public void onErrorResponse(VolleyError error) {
+                Log.wtf("Error",error.toString());
+            }
+        })
+        {
+            public Map<String, String> getHeaders() throws AuthFailureError
+            {
+                HashMap<String, String> headers = new HashMap<String, String>();
+                headers.put("Content-Type", "application/json; charset=utf-8");
+                headers.put("User-agent", System.getProperty("http.agent"));
+                return headers;
+            }
+        };
+
+        requestQueue.add(jsonObjectRequest);
+
+    }
+
+    private boolean isNetworkAvailable() {
+        ConnectivityManager connectivityManager
+                = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo activeNetworkInfo = connectivityManager.getActiveNetworkInfo();
+        return activeNetworkInfo != null && activeNetworkInfo.isConnected();
+    }
+
     @Override
     protected void onPause() {
         super.onPause();
 
         // for background location update
 
-        buildGoogleApiClient();
+
 
 
         //

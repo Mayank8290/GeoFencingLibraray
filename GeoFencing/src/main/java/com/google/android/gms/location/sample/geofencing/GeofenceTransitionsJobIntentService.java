@@ -44,6 +44,7 @@ import com.android.volley.toolbox.JsonObjectRequest;
 import com.android.volley.toolbox.Volley;
 import com.google.android.gms.location.Geofence;
 import com.google.android.gms.location.GeofencingEvent;
+import com.google.android.gms.location.sample.geofencing.GetterSetter.GeoFenceArraylist;
 import com.google.android.gms.location.sample.geofencing.LocalData.LocalData;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
@@ -57,6 +58,7 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 /**
@@ -252,6 +254,7 @@ public class GeofenceTransitionsJobIntentService extends JobIntentService {
         data.setEvent(notificationDetails);
         data.setName("Hero Office");
         data.setTime(String.valueOf(currentTime));
+        data.setProvider("Geo Fence Transition");
 
         arraylists.add(data);
 
@@ -266,7 +269,6 @@ public class GeofenceTransitionsJobIntentService extends JobIntentService {
 
 
         //
-
 
 
         senddatatoserver(event,Latitude,Longitude);
@@ -313,8 +315,8 @@ public class GeofenceTransitionsJobIntentService extends JobIntentService {
             params.put("in_punch","");
             params.put("out_punch",currentDateandTime);
         }
-
-        params.put("ec_no","10046");
+         params.put("ec_no",new LocalData(getApplicationContext()).getuserecno());
+        //params.put("ec_no","10046");
         params.put("location",new LocalData(getApplicationContext()).getuserselctedlocation());
         params.put("status","G");
         params.put("coordinates","Latitude : "+latitude+" , Longitude : "+longitude);
@@ -340,15 +342,20 @@ public class GeofenceTransitionsJobIntentService extends JobIntentService {
                     {
                         new LocalData(getApplicationContext()).setpunchinandpounchout("punchout");
 
+                        String date = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(new Date());
 
-
+                        new LocalData(getApplicationContext()).setuserlastpunchinpunchoutdate(date);
 
                     }
 
                 }
                 else if(response.optString("msg").equals("No update"))
                 {
+                    new LocalData(getApplicationContext()).setpunchinandpounchout("punchout");
 
+                    String date = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(new Date());
+
+                    new LocalData(getApplicationContext()).setuserlastpunchinpunchoutdate(date);
                 }
 
             }

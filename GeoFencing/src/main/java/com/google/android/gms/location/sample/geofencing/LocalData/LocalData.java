@@ -117,4 +117,43 @@ public class LocalData {
     }
 
 
+
+    public String getuserselectedlatitude()
+    {
+        return  pref.getString("userselectedlatitude","");
+    }
+
+    public void setuserselectedlatitude(String latitude)
+    {
+        editor.putString("userselectedlatitude",latitude);
+        editor.commit();
+        editor.apply();
+    }
+
+
+    public String getuserselectedlongitude()
+    {
+        return  pref.getString("userselectedlongitude","");
+    }
+
+    public void setuserselectedlongitude(String longitude)
+    {
+        editor.putString("userselectedlongitude",longitude);
+        editor.commit();
+        editor.apply();
+    }
+
+    public String getuserselectedradius()
+    {
+        return  pref.getString("userselectedradius","");
+    }
+
+    public void setuserselectedradius(String radius)
+    {
+        editor.putString("userselectedradius",radius);
+        editor.commit();
+        editor.apply();
+    }
+
+
 }

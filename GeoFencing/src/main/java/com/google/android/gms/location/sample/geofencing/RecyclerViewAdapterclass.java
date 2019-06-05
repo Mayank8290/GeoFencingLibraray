@@ -8,6 +8,8 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
+import com.google.android.gms.location.sample.geofencing.GetterSetter.GeoFenceArraylist;
+
 import java.util.ArrayList;
 
 
@@ -45,6 +47,7 @@ public class RecyclerViewAdapterclass extends RecyclerView.Adapter<RecyclerViewA
         holder.name.setText("Name : "+arraylists.get(position).getName());
         holder.time.setText("Time : "+arraylists.get(position).getTime());
         holder.event.setText("Event : "+arraylists.get(position).getEvent());
+        holder.provider.setText("Provider : "+arraylists.get(position).getProvider());
 
     }
 
@@ -56,7 +59,7 @@ public class RecyclerViewAdapterclass extends RecyclerView.Adapter<RecyclerViewA
     public class ViewHolder extends RecyclerView.ViewHolder
     {
 
-        TextView name,time,event;
+        TextView name,time,event,provider;
 
         public ViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -64,6 +67,7 @@ public class RecyclerViewAdapterclass extends RecyclerView.Adapter<RecyclerViewA
             name = itemView.findViewById(R.id.name);
             time = itemView.findViewById(R.id.time);
             event = itemView.findViewById(R.id.event);
+            provider = itemView.findViewById(R.id.provider);
 
         }
     }

@@ -41,19 +41,26 @@ import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.JsonObjectRequest;
 import com.android.volley.toolbox.Volley;
+import com.google.android.gms.location.sample.geofencing.GetterSetter.GeoFenceArraylist;
 import com.google.android.gms.location.sample.geofencing.LocalData.LocalData;
 import com.google.android.gms.location.sample.geofencing.NotificationReceiverActivity;
 import com.google.android.gms.location.sample.geofencing.R;
 import com.google.android.gms.location.sample.geofencing.ServerUrl;
 import com.google.android.gms.maps.model.Circle;
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 
 import org.json.JSONObject;
 
+import java.lang.reflect.Type;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.function.DoubleBinaryOperator;
 
@@ -70,6 +77,8 @@ class LocationResultHelper {
     private Context mContext;
     private List<Location> mLocations;
     private NotificationManager mNotificationManager;
+
+    ArrayList<GeoFenceArraylist> arraylists = new ArrayList<>();
 
     LocationResultHelper(Context context, List<Location> locations) {
         mContext = context;
@@ -153,45 +162,18 @@ class LocationResultHelper {
         Boolean isinside = getthedifference();
         String notificationtitle= "";
 
-        if(userselectedgeolocation.equals("HO , The Grand Hotel"))
-        {
+
            if(isinside)
            {
-               notificationtitle = "Entered : HO , The Grand Hotel";
+               notificationtitle = "Entered : "+userselectedgeolocation;
 
            }
            else
            {
-               notificationtitle = "Exited : HO , The Grand Hotel";
+               notificationtitle = "Exited : "+userselectedgeolocation;
 
            }
-        }
-        else if(userselectedgeolocation.equals("HMCI , Sohna Road"))
-        {
-            if(isinside)
-            {
-                notificationtitle = "Entered : HMCI , Sohna Road";
 
-            }
-            else
-            {
-                notificationtitle = "Exited : HMCI , Sohna Road";
-
-            }
-        }
-        else if(userselectedgeolocation.equals("HMCO"))
-        {
-            if(isinside)
-            {
-                notificationtitle = "Entered : HMCO";
-
-            }
-            else
-            {
-                notificationtitle = "Exited : HMCO";
-
-            }
-        }
 
         //
 
@@ -229,6 +211,45 @@ class LocationResultHelper {
 
             new LocalData(mContext).setuserevent("enter");
 
+
+            // saving data to local
+
+
+            if(new LocalData(mContext).getDime().equals("0"))
+            {
+
+            }
+            else
+            {
+                Gson gson = new Gson();
+                String json = new LocalData(mContext).getDime();
+                Type type = new TypeToken<ArrayList<GeoFenceArraylist>>() {}.getType();
+                arraylists =  gson.fromJson(json, type);
+            }
+
+
+            Date currentTime = Calendar.getInstance().getTime();
+
+            GeoFenceArraylist data = new GeoFenceArraylist();
+            data.setEvent("Entered : "+new LocalData(mContext).getuserselctedlocation());
+            data.setName("Hero Office");
+            data.setTime(String.valueOf(currentTime));
+            data.setProvider("Manually Geo Fence");
+
+            arraylists.add(data);
+
+
+
+            // save the task list to preference
+
+            Gson gson1 = new Gson();
+            String json1 = gson1.toJson(arraylists);
+            new LocalData(mContext).setDime(json1);
+
+
+            senddatatoserver("Entered",String.valueOf(mLocations.get(mLocations.size()-1).getLatitude()),String.valueOf(mLocations.get(mLocations.size()-1).getLongitude()));
+
+
         }
 
         if(!isinside && new LocalData(mContext).getuserevent().equals("enter"))
@@ -264,6 +285,49 @@ class LocationResultHelper {
             getthedifference();
 
             new LocalData(mContext).setuserevent("exit");
+
+
+            // saving data to local
+
+
+            if(new LocalData(mContext).getDime().equals("0"))
+            {
+
+            }
+            else
+            {
+                Gson gson = new Gson();
+                String json = new LocalData(mContext).getDime();
+                Type type = new TypeToken<ArrayList<GeoFenceArraylist>>() {}.getType();
+                arraylists =  gson.fromJson(json, type);
+            }
+
+
+            Date currentTime = Calendar.getInstance().getTime();
+
+            GeoFenceArraylist data = new GeoFenceArraylist();
+            data.setEvent("Exited : "+new LocalData(mContext).getuserselctedlocation());
+            data.setName("Hero Office");
+            data.setTime(String.valueOf(currentTime));
+            data.setProvider("Manually Geo Fence");
+
+            arraylists.add(data);
+
+
+
+            // save the task list to preference
+
+            Gson gson1 = new Gson();
+            String json1 = gson1.toJson(arraylists);
+            new LocalData(mContext).setDime(json1);
+
+
+
+            //
+
+            senddatatoserver("Exited", String.valueOf(mLocations.get(mLocations.size()-1).getLatitude()), String.valueOf(mLocations.get(mLocations.size()-1).getLongitude()));
+
+
 
         }
 
@@ -310,27 +374,15 @@ class LocationResultHelper {
 
        }
 
-       if(isinside)
-       {
-           if(new LocalData(mContext).getpunchinandpounchout().equals("punchin"))
-           {
-               senddatatoserver("Entered",String.valueOf(mLocations.get(mLocations.size()-1).getLatitude()),String.valueOf(mLocations.get(mLocations.size()-1).getLongitude()));
-           }
-       }
-       else
-       {
-           if(new LocalData(mContext).getpunchinandpounchout().equals("punchout")) {
-               senddatatoserver("Exited", String.valueOf(mLocations.get(mLocations.size()-1).getLatitude()), String.valueOf(mLocations.get(mLocations.size()-1).getLongitude()));
-           }
-       }
+
 
       return isinside;
     }
 
     boolean checkInside(double longitude, double latitude) {
         return calculateDistance(
-                77.0433149267526, 28.412402603746372, longitude, latitude
-        ) < 50;
+                Double.valueOf(new LocalData(mContext).getuserselectedlongitude()), Double.valueOf(new LocalData(mContext).getuserselectedlatitude()), longitude, latitude
+        ) < Float.valueOf(new LocalData(mContext).getuserselectedradius());
     }
 
     double calculateDistance(
@@ -374,8 +426,8 @@ class LocationResultHelper {
             params.put("in_punch","");
             params.put("out_punch",currentDateandTime);
         }
-
-        params.put("ec_no","10046");
+        params.put("ec_no",new LocalData(mContext).getuserecno());
+       // params.put("ec_no","10046");
         params.put("location",new LocalData(mContext).getuserselctedlocation());
         params.put("status","MG");
         params.put("coordinates","Latitude : "+latitude+" , Longitude : "+longitude);
@@ -402,12 +454,20 @@ class LocationResultHelper {
                     {
                         new LocalData(mContext).setpunchinandpounchout("punchout");
 
+                        String date = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(new Date());
+
+                        new LocalData(mContext).setuserlastpunchinpunchoutdate(date);
+
                     }
 
                 }
                 else if(response.optString("msg").equals("No update"))
                 {
+                    new LocalData(mContext).setpunchinandpounchout("punchout");
 
+                    String date = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(new Date());
+
+                    new LocalData(mContext).setuserlastpunchinpunchoutdate(date);
                 }
 
             }
