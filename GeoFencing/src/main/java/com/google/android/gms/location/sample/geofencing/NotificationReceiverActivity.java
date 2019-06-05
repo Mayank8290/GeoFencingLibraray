@@ -159,7 +159,7 @@ public class NotificationReceiverActivity extends AppCompatActivity
     //
 
 
-
+    int opentime = 0;
 
     /**
      * Request code for location permission request.
@@ -471,11 +471,6 @@ public class NotificationReceiverActivity extends AppCompatActivity
 
 
         spinner = (Spinner)findViewById(R.id.spinner);
-
-
-
-
-
 
 
         spinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
@@ -947,7 +942,14 @@ public class NotificationReceiverActivity extends AppCompatActivity
                     // All location settings are satisfied. The client can initialize location
                     // requests here.
 
-
+                    if(!isNetworkAvailable())
+                    {
+                        displayinternetnotconnected();
+                    }
+                    else
+                    {
+                        getthelocation();
+                    }
                     //
 
 
@@ -1005,7 +1007,14 @@ public class NotificationReceiverActivity extends AppCompatActivity
                             return;
                         }
                         locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, MIN_TIME, MIN_DISTANCE, NotificationReceiverActivity.this); //You can also use LocationManager.GPS_PROVIDER and LocationManager.PASSIVE_PROVIDER
-
+                        if(!isNetworkAvailable())
+                        {
+                            displayinternetnotconnected();
+                        }
+                        else
+                        {
+                            getthelocation();
+                        }
                         break;
                     case Activity.RESULT_CANCELED:
                         // The user was asked to change settings, but chose not to
@@ -1032,6 +1041,8 @@ public class NotificationReceiverActivity extends AppCompatActivity
     @Override
     public void onStart() {
         super.onStart();
+
+        buildGoogleApiClient();
 
         PreferenceManager.getDefaultSharedPreferences(this)
                 .registerOnSharedPreferenceChangeListener(this);
@@ -1061,14 +1072,7 @@ public class NotificationReceiverActivity extends AppCompatActivity
             performPendingGeofenceTask();
         }
 
-        if(!isNetworkAvailable())
-        {
-            displayinternetnotconnected();
-        }
-        else
-        {
-            getthelocation();
-        }
+
 
     }
 
@@ -1609,7 +1613,7 @@ public class NotificationReceiverActivity extends AppCompatActivity
     @Override
     protected void onResume() {
         super.onResume();
-        buildGoogleApiClient();
+
 //        getApplicationContext().registerReceiver(new GPScheck(), new IntentFilter(LocationManager.PROVIDERS_CHANGED_ACTION));
     }
 
@@ -1711,6 +1715,12 @@ public class NotificationReceiverActivity extends AppCompatActivity
 
     public void getthelocation()
     {
+
+        opentime = 1;
+
+        locationdata.clear();
+        contacts.clear();
+
         ProgressDialog progress = new ProgressDialog(this);
         progress.setTitle("Loading");
         progress.setMessage("Wait while loading...");
@@ -1756,9 +1766,6 @@ public class NotificationReceiverActivity extends AppCompatActivity
                     contacts.add(locationdata.get(i).getLocation());
 
 
-
-
-
                 }
 
 
@@ -1772,17 +1779,31 @@ public class NotificationReceiverActivity extends AppCompatActivity
 
                 // set the user choosed to the spinner
 
-                spinner.setSelection(1);
-
-
-                for(int i=0;i<contacts.size();i++)
+                try
                 {
-                    if(new LocalData(getApplicationContext()).getuserselctedlocation().equals(contacts.get(i)))
-                    {
-                        spinner.setSelection(i);
+                    if(new LocalData(getApplicationContext()).getuserselctedlocation().equals("")) {
+                        spinner.setSelection(1);
                     }
+                    else
+                    {
+                        for(int i=0;i<contacts.size();i++)
+                        {
+                            if(new LocalData(getApplicationContext()).getuserselctedlocation().equals(contacts.get(i)))
+                            {
+                                spinner.setSelection(i);
+                            }
+
+                        }
+                    }
+                }
+                catch (Exception e)
+                {
 
                 }
+
+
+
+
 
 
                 //
