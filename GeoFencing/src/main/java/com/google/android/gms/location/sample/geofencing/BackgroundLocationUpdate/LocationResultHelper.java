@@ -30,6 +30,7 @@ import android.os.Handler;
 import android.os.Looper;
 import android.preference.PreferenceManager;
 import android.support.annotation.RequiresApi;
+import android.support.v4.app.NotificationCompat;
 import android.support.v4.app.TaskStackBuilder;
 import android.util.Log;
 import android.widget.Toast;
@@ -84,11 +85,14 @@ class LocationResultHelper {
         mContext = context;
         mLocations = locations;
 
-        NotificationChannel channel = new NotificationChannel(PRIMARY_CHANNEL,
-                context.getString(R.string.default_channel), NotificationManager.IMPORTANCE_DEFAULT);
-        channel.setLightColor(Color.GREEN);
-        channel.setLockscreenVisibility(Notification.VISIBILITY_PRIVATE);
-        getNotificationManager().createNotificationChannel(channel);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            NotificationChannel channel = new NotificationChannel(PRIMARY_CHANNEL,
+                    context.getString(R.string.default_channel), NotificationManager.IMPORTANCE_DEFAULT);
+            channel.setLightColor(Color.GREEN);
+            channel.setLockscreenVisibility(Notification.VISIBILITY_PRIVATE);
+            getNotificationManager().createNotificationChannel(channel);
+        }
+
     }
 
     /**
@@ -194,7 +198,9 @@ class LocationResultHelper {
             PendingIntent notificationPendingIntent =
                     stackBuilder.getPendingIntent(0, PendingIntent.FLAG_UPDATE_CURRENT);
 
-            Notification.Builder notificationBuilder = new Notification.Builder(mContext,
+
+
+            NotificationCompat.Builder notificationBuilder = new NotificationCompat.Builder(mContext,
                     PRIMARY_CHANNEL)
                     .setContentTitle(notificationtitle)
                     .setContentText(mContext.getString(R.string.geofence_transition_notification_text))
