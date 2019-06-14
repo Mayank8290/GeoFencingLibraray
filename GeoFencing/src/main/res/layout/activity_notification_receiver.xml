@@ -72,8 +72,64 @@
         >
 
 
-        <RelativeLayout
+        <Button
+            android:drawableLeft="@mipmap/history"
             android:visibility="gone"
+            android:layout_marginTop="5dp"
+            android:background="@drawable/roundedbutton"
+            android:textColor="#FFFFFF"
+            android:alpha="0.6"
+            android:id="@+id/add_geofences_button"
+            android:layout_width="140dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:onClick="addGeofencesButtonHandler"
+            android:text="@string/add_geofences" />
+
+        <Button
+            android:paddingRight="10dp"
+            android:paddingLeft="10dp"
+            android:alpha="0.6"
+            android:background="@drawable/roundedbutton"
+            android:visibility="gone"
+            android:layout_marginTop="5dp"
+            android:textColor="#FFFFFF"
+            android:id="@+id/remove_geofences_button"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:onClick="requestLocationUpdates"
+            android:text="Background Location" />
+
+
+        <Button
+            android:drawableLeft="@mipmap/history"
+            android:background="@drawable/roundedbutton"
+            android:layout_marginTop="8dp"
+            android:textColor="#ffffff"
+            android:alpha="0.6"
+            android:visibility="gone"
+            android:onClick="addNotification"
+            android:id="@+id/generatenotification"
+            android:layout_weight="1"
+            android:text="Demo Notification"
+            android:layout_width="180dp"
+            android:layout_height="55dp" />
+
+        <Button
+            android:drawableLeft="@mipmap/history"
+            android:layout_marginTop="8dp"
+            android:background="@drawable/roundedbutton"
+            android:textColor="#FFFFFF"
+            android:alpha="0.6"
+            android:visibility="visible"
+            android:layout_alignParentBottom="true"
+            android:text="History"
+            android:id="@+id/displayalldata"
+            android:layout_width="130dp"
+            android:layout_height="wrap_content" />
+
+        <RelativeLayout
+            android:visibility="invisible"
             android:alpha="0.6"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content">
@@ -131,64 +187,6 @@
 
 
         </RelativeLayout>
-
-
-        <Button
-            android:drawableLeft="@mipmap/history"
-            android:visibility="gone"
-            android:layout_marginTop="5dp"
-            android:background="@drawable/roundedbutton"
-            android:textColor="#FFFFFF"
-            android:alpha="0.6"
-            android:id="@+id/add_geofences_button"
-            android:layout_width="140dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:onClick="addGeofencesButtonHandler"
-            android:text="@string/add_geofences" />
-
-        <Button
-            android:paddingRight="10dp"
-            android:paddingLeft="10dp"
-            android:alpha="0.6"
-            android:background="@drawable/roundedbutton"
-            android:visibility="gone"
-            android:layout_marginTop="5dp"
-            android:textColor="#FFFFFF"
-            android:id="@+id/remove_geofences_button"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:onClick="requestLocationUpdates"
-            android:text="Background Location" />
-
-
-        <Button
-            android:drawableLeft="@mipmap/history"
-            android:background="@drawable/roundedbutton"
-            android:layout_marginTop="8dp"
-            android:textColor="#ffffff"
-            android:alpha="0.6"
-            android:visibility="gone"
-            android:onClick="addNotification"
-            android:id="@+id/generatenotification"
-            android:layout_weight="1"
-            android:text="Demo Notification"
-            android:layout_width="180dp"
-            android:layout_height="55dp" />
-
-        <Button
-            android:drawableLeft="@mipmap/history"
-            android:layout_marginTop="8dp"
-            android:background="@drawable/roundedbutton"
-            android:textColor="#FFFFFF"
-            android:alpha="0.6"
-            android:visibility="visible"
-            android:layout_alignParentBottom="true"
-            android:text="History"
-            android:id="@+id/displayalldata"
-            android:layout_width="130dp"
-            android:layout_height="wrap_content" />
-
 
 
     </LinearLayout>
