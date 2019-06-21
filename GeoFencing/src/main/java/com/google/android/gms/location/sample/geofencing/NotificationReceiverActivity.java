@@ -322,7 +322,7 @@ public class NotificationReceiverActivity extends AppCompatActivity
             new LocalData(getApplicationContext()).setVersionName(version);
 
 
-            new LocalData(getApplicationContext()).setuserecno("100000");
+            new LocalData(getApplicationContext()).setuserecno(Ecno);
             new LocalData(getApplicationContext()).setName(name);
 
             // Toast.makeText(getApplicationContext(),"Ec No : "+Ecno+", Location : "+userLocation,Toast.LENGTH_SHORT).show();
