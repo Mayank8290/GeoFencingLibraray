@@ -128,6 +128,16 @@
             android:layout_width="130dp"
             android:layout_height="wrap_content" />
 
+
+        <ImageView
+            android:tint="#000000"
+            android:id="@+id/information"
+            android:alpha="0.6"
+            android:layout_marginTop="10dp"
+            android:src="@mipmap/information"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
+
         <RelativeLayout
             android:visibility="invisible"
             android:alpha="0.6"

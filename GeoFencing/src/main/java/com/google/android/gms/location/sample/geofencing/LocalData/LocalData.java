@@ -49,6 +49,50 @@ public class LocalData {
 
 
 
+
+    public void setName(String name)
+    {
+        editor.putString("nameofusernamegeo",name);
+        editor.commit();
+        editor.apply();
+    }
+    public String getName()
+    {
+        return  pref.getString("nameofusernamegeo","0");
+
+    }
+
+
+
+    public void setVersionName(String version)
+    {
+        editor.putString("versionname",version);
+        editor.commit();
+        editor.apply();
+    }
+    public String getVersionName()
+    {
+        return  pref.getString("versionname","");
+
+    }
+
+    public void setVersionCode(String version)
+    {
+        editor.putString("versioncode",version);
+        editor.commit();
+        editor.apply();
+    }
+    public String getVersionCode()
+    {
+        return  pref.getString("versioncode","");
+
+    }
+
+
+
+
+
+
     public void setuserselctedlocation(String location)
     {
         editor.putString("userselectedlocation",location);

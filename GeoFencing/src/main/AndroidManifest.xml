@@ -11,6 +11,7 @@
 
 
     <application
+
         android:supportsRtl="true"
         android:usesCleartextTraffic="true"
         tools:ignore="GoogleAppIndexingWarning">
@@ -32,6 +33,7 @@
                 <!--<category android:name="android.intent.category.LAUNCHER" />-->
             <!--</intent-filter>-->
         <!--</activity>-->
+
         <activity android:name=".NotificationReceiverActivity"></activity>
         <activity android:name=".DisplayPrevousTriggers"></activity>
         <receiver

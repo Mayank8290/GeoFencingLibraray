@@ -24,6 +24,7 @@ import com.google.android.gms.location.LocationSettingsStates;
 import com.google.android.gms.location.LocationSettingsStatusCodes;
 import com.google.android.gms.location.sample.geofencing.BackgroundLocationUpdate.LocationRequestHelper;
 import com.google.android.gms.location.sample.geofencing.BackgroundLocationUpdate.LocationUpdatesBroadcastReceiver;
+import com.google.android.gms.location.sample.geofencing.GetterSetter.GeoFenceArraylist;
 import com.google.android.gms.location.sample.geofencing.GetterSetter.LocationDataGetterSetter;
 import com.google.android.gms.location.sample.geofencing.LocalData.LocalData;
 import com.google.android.gms.maps.CameraUpdate;
@@ -37,6 +38,8 @@ import com.google.android.gms.maps.model.CircleOptions;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 
 
 import android.Manifest;
@@ -53,6 +56,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentSender;
 import android.content.SharedPreferences;
+import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.location.Location;
@@ -92,6 +96,7 @@ import android.widget.Toast;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
+import java.lang.reflect.Type;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -101,13 +106,6 @@ import java.util.Locale;
 import java.util.Map;
 
 
-
-/**
- * This demo shows how GMS Location can be used to check for changes to the users location.  The
- * "My Location" button uses GMS Location to set the blue dot representing the users location.
- * Permission for {@link android.Manifest.permission#ACCESS_FINE_LOCATION} is requested at run
- * time. If the permission has not been granted, the Activity is finished with an error message.
- */
 public class NotificationReceiverActivity extends AppCompatActivity
         implements
         OnMyLocationButtonClickListener,
@@ -127,14 +125,14 @@ public class NotificationReceiverActivity extends AppCompatActivity
     /**
      * The desired interval for location updates. Inexact. Updates may be more or less frequent.
      */
-    // FIXME: 5/16/17
+
     private static final long UPDATE_INTERVAL = 10 * 1000;
 
     /**
      * The fastest rate for active location updates. Updates will never be more frequent
      * than this value, but they may be less frequent.
      */
-    // FIXME: 5/14/17
+
     private static final long FASTEST_UPDATE_INTERVAL = UPDATE_INTERVAL / 2;
 
     /**
@@ -152,8 +150,6 @@ public class NotificationReceiverActivity extends AppCompatActivity
      * The entry point to Google Play Services.
      */
     private GoogleApiClient mGoogleApiClient;
-
-
 
 
     //
@@ -194,6 +190,8 @@ public class NotificationReceiverActivity extends AppCompatActivity
 
 
     ArrayList<LocationDataGetterSetter> locationdata = new ArrayList<>();
+
+    ImageView information;
 
 
     @Override
@@ -278,6 +276,8 @@ public class NotificationReceiverActivity extends AppCompatActivity
 
     TextView punchinouttext;
 
+   // private FirebaseAnalytics mFirebaseAnalytics;
+
     @RequiresApi(api = Build.VERSION_CODES.M)
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -285,21 +285,49 @@ public class NotificationReceiverActivity extends AppCompatActivity
         setContentView(R.layout.activity_notification_receiver);
 
 
+        // firebase analytics
+//        mFirebaseAnalytics = FirebaseAnalytics.getInstance(this);
+//
+////
+//        Bundle bundle = new Bundle();
+//        bundle.putString(FirebaseAnalytics.Param.ITEM_ID, "1");
+//        bundle.putString(FirebaseAnalytics.Param.ITEM_NAME, "Opened geo Fence");
+//        bundle.putString(FirebaseAnalytics.Param.CONTENT_TYPE, "image");
+//        mFirebaseAnalytics.logEvent(FirebaseAnalytics.Event.SELECT_CONTENT, bundle);
+
+
+        //
+
+        information = (ImageView)findViewById(R.id.information);
+        information.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+
+                FragmentManager fm = getSupportFragmentManager();
+                Information forgotPasswordDialog = new Information();
+                forgotPasswordDialog.show(fm, "redemm");
+
+            }
+        });
+
         // getting data from previos activity
 
-        try
-        {
+        try {
             String Ecno = getIntent().getStringExtra("ecno");
             String userLocation = getIntent().getStringExtra("location");
+            String name = getIntent().getStringExtra("name");
+            String version = getIntent().getStringExtra("version");
 
 
-            new LocalData(getApplicationContext()).setuserecno(Ecno);
+            new LocalData(getApplicationContext()).setVersionName(version);
 
-           // Toast.makeText(getApplicationContext(),"Ec No : "+Ecno+", Location : "+userLocation,Toast.LENGTH_SHORT).show();
 
-        }
-        catch (Exception e)
-        {
+            new LocalData(getApplicationContext()).setuserecno("100000");
+            new LocalData(getApplicationContext()).setName(name);
+
+            // Toast.makeText(getApplicationContext(),"Ec No : "+Ecno+", Location : "+userLocation,Toast.LENGTH_SHORT).show();
+
+        } catch (Exception e) {
             //Toast.makeText(getApplicationContext(),"Data Not Getting",Toast.LENGTH_SHORT).show();
         }
 
@@ -310,35 +338,29 @@ public class NotificationReceiverActivity extends AppCompatActivity
 
         punchinoutbutton = (LinearLayout) findViewById(R.id.punchinoutbutton);
 
-        punchinouttext = (TextView)findViewById(R.id.punchinouttext);
+        punchinouttext = (TextView) findViewById(R.id.punchinouttext);
 
         String todaydate = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(new Date());
 
 
-        if(new LocalData(getApplicationContext()).getpunchinandpounchout().equals("punchin"))
-        {
+        if (new LocalData(getApplicationContext()).getpunchinandpounchout().equals("punchin")) {
             punchinouttext.setText("Punch In");
 
-        }
-        else if (new LocalData(getApplicationContext()).getpunchinandpounchout().equals("punchout"))
-        {
+        } else if (new LocalData(getApplicationContext()).getpunchinandpounchout().equals("punchout")) {
             punchinouttext.setText("Punch Out");
 
         }
 
 
-        if(new LocalData(getApplicationContext()).getuserlastpunchinpunchoutdate().equals(todaydate))
-        {
+        if (new LocalData(getApplicationContext()).getuserlastpunchinpunchoutdate().equals(todaydate)) {
             punchinouttext.setText("Punch Out");
             new LocalData(getApplicationContext()).setpunchinandpounchout("punchout");
-        }
-        else
-        {
+        } else {
             new LocalData(getApplicationContext()).setpunchinandpounchout("punchin");
             new LocalData(getApplicationContext()).setuserlastpunchinpunchoutdate("");
         }
 
-        openspinnerimage = (ImageView)findViewById(R.id.openspinnerimage);
+        openspinnerimage = (ImageView) findViewById(R.id.openspinnerimage);
         openspinnerimage.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -350,74 +372,70 @@ public class NotificationReceiverActivity extends AppCompatActivity
             @Override
             public void onClick(View v) {
 
-               if(new LocalData(getApplicationContext()).getpunchinandpounchout().equals("punchin"))
-               {
+                if(Double.valueOf(getthedifferenceinmeters())  > Double.valueOf(new LocalData(getApplicationContext()).getuserselectedradius()))
+                {
+                    Toast.makeText(getApplicationContext(),"Your current location is not matching any Hero office location.",Toast.LENGTH_LONG).show();
+                    return;
+                }else if (new LocalData(getApplicationContext()).getpunchinandpounchout().equals("punchin")) {
 
 
-
-                   //
-
-
-                   // alert user for punch
-
-                   new AlertDialog.Builder(NotificationReceiverActivity.this)
-                           .setTitle("Punch In")
-                           .setMessage("Are you sure you want to punch in?")
-
-                           // Specifying a listener allows you to take an action before dismissing the dialog.
-                           // The dialog is automatically dismissed when a dialog button is clicked.
-                           .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
-                               public void onClick(DialogInterface dialog, int which) {
-                                   // Continue with delete operation
-
-                                   senddatatoserver("punchin");
-                               }
-                           })
-
-                           // A null listener allows the button to dismiss the dialog and take no further action.
-                           .setNegativeButton(android.R.string.no, null)
-                           .setIcon(android.R.drawable.ic_dialog_alert)
-                           .show();
+                    //
 
 
+                    // alert user for punch
+
+                    new AlertDialog.Builder(NotificationReceiverActivity.this)
+                            .setTitle("Punch In")
+                            .setMessage("Are you sure you want to punch in?")
+
+                            // Specifying a listener allows you to take an action before dismissing the dialog.
+                            // The dialog is automatically dismissed when a dialog button is clicked.
+                            .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
+                                public void onClick(DialogInterface dialog, int which) {
+                                    // Continue with delete operation
+
+                                    senddatatoserver("punchin");
+                                }
+                            })
+
+                            // A null listener allows the button to dismiss the dialog and take no further action.
+                            .setNegativeButton(android.R.string.no, null)
+                            .setIcon(android.R.drawable.ic_dialog_alert)
+                            .show();
 
 
-               }
-               else if (new LocalData(getApplicationContext()).getpunchinandpounchout().equals("punchout"))
-               {
+                } else if (new LocalData(getApplicationContext()).getpunchinandpounchout().equals("punchout")) {
 
-                   // if punch in already done
+                    // if punch in already done
 
-                   LinearLayout b = (LinearLayout)v;
-                   TextView buttonText = (TextView) b.getChildAt(1);
-                   String text = buttonText.getText().toString();
-                   if(text.equals("Punch In"))
-                   {
-                       Toast.makeText(getApplicationContext(),"Punch In Already Done From your location",Toast.LENGTH_SHORT).show();
-                   }
-                   else {
-                       new AlertDialog.Builder(NotificationReceiverActivity.this)
-                               .setTitle("Punch Out")
-                               .setMessage("Are you sure you want to punch out?")
+                    LinearLayout b = (LinearLayout) v;
+                    TextView buttonText = (TextView) b.getChildAt(1);
+                    String text = buttonText.getText().toString();
+                    if (text.equals("Punch In")) {
+                        Toast.makeText(getApplicationContext(), "Punch In Already Done From your location", Toast.LENGTH_SHORT).show();
+                    } else {
+                        new AlertDialog.Builder(NotificationReceiverActivity.this)
+                                .setTitle("Punch Out")
+                                .setMessage("Are you sure you want to punch out?")
 
-                               // Specifying a listener allows you to take an action before dismissing the dialog.
-                               // The dialog is automatically dismissed when a dialog button is clicked.
-                               .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
-                                   public void onClick(DialogInterface dialog, int which) {
-                                       // Continue with delete operation
+                                // Specifying a listener allows you to take an action before dismissing the dialog.
+                                // The dialog is automatically dismissed when a dialog button is clicked.
+                                .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
+                                    public void onClick(DialogInterface dialog, int which) {
+                                        // Continue with delete operation
 
-                                       senddatatoserver("punchout");
-                                   }
-                               })
+                                        senddatatoserver("punchout");
+                                    }
+                                })
 
-                               // A null listener allows the button to dismiss the dialog and take no further action.
-                               .setNegativeButton(android.R.string.no, null)
-                               .setIcon(android.R.drawable.ic_dialog_alert)
-                               .show();
-                   }
+                                // A null listener allows the button to dismiss the dialog and take no further action.
+                                .setNegativeButton(android.R.string.no, null)
+                                .setIcon(android.R.drawable.ic_dialog_alert)
+                                .show();
+                    }
 
 
-                   }
+                }
 
             }
         });
@@ -427,11 +445,6 @@ public class NotificationReceiverActivity extends AppCompatActivity
         mapFragment.getMapAsync(this);
 
         locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
-
-
-
-
-
 
 
         // for geo fencing
@@ -470,7 +483,7 @@ public class NotificationReceiverActivity extends AppCompatActivity
         //
 
 
-        spinner = (Spinner)findViewById(R.id.spinner);
+        spinner = (Spinner) findViewById(R.id.spinner);
 
 
         spinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
@@ -478,66 +491,61 @@ public class NotificationReceiverActivity extends AppCompatActivity
             public void onItemSelected(AdapterView<?> parentView, View selectedItemView, int position, long id) {
                 // your code here
 
-                if(position > 0) {
+                if (position > 0) {
 
                     String location = locationdata.get(position - 1).getLocation();
                     mGeofenceList.clear();
 
                     if (!location.equals(new LocalData(getApplicationContext()).getuserselctedlocation())) {
 
-                    populateGeofenceList(position - 1);
-                    mMap.clear();
+                        populateGeofenceList(position - 1);
+                        mMap.clear();
 
-                    // drawing a circle on the map
-                    LatLng geofencelatLng = new LatLng(Double.valueOf(locationdata.get(position - 1).getLatitude()), Double.valueOf(locationdata.get(position - 1).getLongitude()));
-                    mMap.addCircle(new CircleOptions()
-                            .center(geofencelatLng)
-                            .radius(Float.valueOf(locationdata.get(position - 1).getRadius()))
-                            .strokeWidth(0f)
-                            .fillColor(0x5500ff00));
-                    CameraUpdate cameraUpdate = CameraUpdateFactory.newLatLngZoom(geofencelatLng, 15);
-                    mMap.animateCamera(cameraUpdate);
-                    locationManager.removeUpdates(NotificationReceiverActivity.this);
+                        // drawing a circle on the map
+                        LatLng geofencelatLng = new LatLng(Double.valueOf(locationdata.get(position - 1).getLatitude()), Double.valueOf(locationdata.get(position - 1).getLongitude()));
+                        mMap.addCircle(new CircleOptions()
+                                .center(geofencelatLng)
+                                .radius(Float.valueOf(locationdata.get(position - 1).getRadius()))
+                                .strokeWidth(0f)
+                                .fillColor(0x5500ff00));
+                        CameraUpdate cameraUpdate = CameraUpdateFactory.newLatLngZoom(geofencelatLng, 15);
+                        mMap.animateCamera(cameraUpdate);
+                        locationManager.removeUpdates(NotificationReceiverActivity.this);
 
-                    //setting user selected data to locaL
-                    new LocalData(getApplicationContext()).setuserselctedlocation(location);
-                    new LocalData(getApplicationContext()).setuserselectedlongitude(locationdata.get(position-1).getLongitude());
-                    new LocalData(getApplicationContext()).setuserselectedlatitude(locationdata.get(position-1).getLatitude());
-                    new LocalData(getApplicationContext()).setuserselectedradius(locationdata.get(position-1).getRadius());
+                        //setting user selected data to locaL
+                        new LocalData(getApplicationContext()).setuserselctedlocation(location);
+                        new LocalData(getApplicationContext()).setuserselectedlongitude(locationdata.get(position - 1).getLongitude());
+                        new LocalData(getApplicationContext()).setuserselectedlatitude(locationdata.get(position - 1).getLatitude());
+                        new LocalData(getApplicationContext()).setuserselectedradius(locationdata.get(position - 1).getRadius());
 
-                    if (!checkPermissions()) {
-                        mPendingGeofenceTask = NotificationReceiverActivity.PendingGeofenceTask.ADD;
-                        requestPermissions();
-                        return;
-                    }
-                    if (getGeofencesAdded()) {
-                        removeGeofences();
-                        addGeofences();
-                    } else {
-                        addGeofences();
-                    }
+                        if (!checkPermissions()) {
+                            mPendingGeofenceTask = NotificationReceiverActivity.PendingGeofenceTask.ADD;
+                            requestPermissions();
+                            return;
+                        }
+                        if (getGeofencesAdded()) {
+                            removeGeofences();
+                            addGeofences();
+                        } else {
+                            addGeofences();
+                        }
 
                         requestLocationUpdates();
 
-                     }
-                else
-                    {
+                    } else {
                         mMap.clear();
-                        LatLng geofencelatLng = new LatLng(Double.valueOf(locationdata.get(position-1).getLatitude()), Double.valueOf(locationdata.get(position-1).getLongitude()));
+                        LatLng geofencelatLng = new LatLng(Double.valueOf(locationdata.get(position - 1).getLatitude()), Double.valueOf(locationdata.get(position - 1).getLongitude()));
                         mMap.addCircle(new CircleOptions()
                                 .center(geofencelatLng)
-                                .radius(Float.valueOf(locationdata.get(position-1).getRadius()))
+                                .radius(Float.valueOf(locationdata.get(position - 1).getRadius()))
                                 .strokeWidth(0f)
                                 .fillColor(0x5500ff00));
                         // Toast.makeText(getApplicationContext(),"Already Added",Toast.LENGTH_LONG).show();
                     }
 
-                }
-                else
-                {
+                } else {
 
                 }
-
 
 
 //                if(position == 1) {
@@ -706,7 +714,7 @@ public class NotificationReceiverActivity extends AppCompatActivity
         });
 
 
-       // getthelocation();
+        // getthelocation();
 
     }
 
@@ -767,7 +775,7 @@ public class NotificationReceiverActivity extends AppCompatActivity
 
     @Override
     public boolean onMyLocationButtonClick() {
-       // Toast.makeText(this, "MyLocation button clicked", Toast.LENGTH_SHORT).show();
+        // Toast.makeText(this, "MyLocation button clicked", Toast.LENGTH_SHORT).show();
         // Return false so that we don't consume the event and the default behavior still occurs
         // (the camera animates to the user's current position).
         return false;
@@ -816,7 +824,7 @@ public class NotificationReceiverActivity extends AppCompatActivity
     @Override
     public void onLocationChanged(Location location) {
         LatLng latLng = new LatLng(location.getLatitude(), location.getLongitude());
-        Log.wtf("CurrentLocation",latLng.toString());
+        Log.wtf("CurrentLocation", latLng.toString());
         CameraUpdate cameraUpdate = CameraUpdateFactory.newLatLngZoom(latLng, 15);
         mMap.animateCamera(cameraUpdate);
         locationManager.removeUpdates(this);
@@ -825,35 +833,30 @@ public class NotificationReceiverActivity extends AppCompatActivity
         //drawing circle
 
 
-        if(new LocalData(getApplicationContext()).getuserselctedlocation().equals("HO , The Grand Hotel"))
-        {
-            LatLng geofencelatLng = new LatLng(28.5388096,77.1514862);
+        if (new LocalData(getApplicationContext()).getuserselctedlocation().equals("HO , The Grand Hotel")) {
+            LatLng geofencelatLng = new LatLng(28.5388096, 77.1514862);
 
-        mMap.addCircle(new CircleOptions()
-                .center(geofencelatLng)
-                .radius(50)
-                .strokeWidth(0f)
-                .fillColor(0x5500ff00));
-        }
-        else if(new LocalData(getApplicationContext()).getuserselctedlocation().equals("HMCI , Sohna Road"))
-        {
-            LatLng geofencelatLng = new LatLng(28.412402603746372,77.0433149267526);
+            mMap.addCircle(new CircleOptions()
+                    .center(geofencelatLng)
+                    .radius(50)
+                    .strokeWidth(0f)
+                    .fillColor(0x5500ff00));
+        } else if (new LocalData(getApplicationContext()).getuserselctedlocation().equals("HMCI , Sohna Road")) {
+            LatLng geofencelatLng = new LatLng(28.412402603746372, 77.0433149267526);
 
-        mMap.addCircle(new CircleOptions()
-                .center(geofencelatLng)
-                .radius(50)
-                .strokeWidth(0f)
-                .fillColor(0x5500ff00));
-        }
-        else if(new LocalData(getApplicationContext()).getuserselctedlocation().equals("HMCO"))
-        {
-            LatLng geofencelatLng = new LatLng(28.53988,77.15401);
+            mMap.addCircle(new CircleOptions()
+                    .center(geofencelatLng)
+                    .radius(50)
+                    .strokeWidth(0f)
+                    .fillColor(0x5500ff00));
+        } else if (new LocalData(getApplicationContext()).getuserselctedlocation().equals("HMCO")) {
+            LatLng geofencelatLng = new LatLng(28.53988, 77.15401);
 
-        mMap.addCircle(new CircleOptions()
-                .center(geofencelatLng)
-                .radius(50)
-                .strokeWidth(0f)
-                .fillColor(0x5500ff00));
+            mMap.addCircle(new CircleOptions()
+                    .center(geofencelatLng)
+                    .radius(50)
+                    .strokeWidth(0f)
+                    .fillColor(0x5500ff00));
         }
 
 
@@ -874,8 +877,7 @@ public class NotificationReceiverActivity extends AppCompatActivity
 
     }
 
-    public void turnuserlocationon()
-    {
+    public void turnuserlocationon() {
         int LOCATION_SETTINGS_REQUEST = 12;
 
         LocationRequest mLocationRequest = LocationRequest.create()
@@ -920,8 +922,7 @@ public class NotificationReceiverActivity extends AppCompatActivity
     }
 
 
-    public void turnonlocationtwo()
-    {
+    public void turnonlocationtwo() {
         LocationRequest mLocationRequest = new LocationRequest();
         mLocationRequest.setInterval(10);
         mLocationRequest.setSmallestDisplacement(10);
@@ -931,7 +932,7 @@ public class NotificationReceiverActivity extends AppCompatActivity
                 LocationSettingsRequest.Builder();
         builder.addLocationRequest(mLocationRequest);
 
-        Task<LocationSettingsResponse> task=LocationServices.getSettingsClient(this).checkLocationSettings(builder.build());
+        Task<LocationSettingsResponse> task = LocationServices.getSettingsClient(this).checkLocationSettings(builder.build());
 
         task.addOnCompleteListener(new OnCompleteListener<LocationSettingsResponse>() {
             @RequiresApi(api = Build.VERSION_CODES.M)
@@ -942,12 +943,9 @@ public class NotificationReceiverActivity extends AppCompatActivity
                     // All location settings are satisfied. The client can initialize location
                     // requests here.
 
-                    if(!isNetworkAvailable())
-                    {
+                    if (!isNetworkAvailable()) {
                         displayinternetnotconnected();
-                    }
-                    else
-                    {
+                    } else {
                         getthelocation();
                     }
                     //
@@ -1007,12 +1005,9 @@ public class NotificationReceiverActivity extends AppCompatActivity
                             return;
                         }
                         locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, MIN_TIME, MIN_DISTANCE, NotificationReceiverActivity.this); //You can also use LocationManager.GPS_PROVIDER and LocationManager.PASSIVE_PROVIDER
-                        if(!isNetworkAvailable())
-                        {
+                        if (!isNetworkAvailable()) {
                             displayinternetnotconnected();
-                        }
-                        else
-                        {
+                        } else {
                             getthelocation();
                         }
                         break;
@@ -1025,7 +1020,7 @@ public class NotificationReceiverActivity extends AppCompatActivity
                         startActivity(intent1);
 
 
-                        Toast.makeText(NotificationReceiverActivity.this,"Canceled",Toast.LENGTH_SHORT).show();
+                        Toast.makeText(NotificationReceiverActivity.this, "Canceled", Toast.LENGTH_SHORT).show();
                         break;
                     default:
                         break;
@@ -1073,29 +1068,24 @@ public class NotificationReceiverActivity extends AppCompatActivity
         }
 
 
-
     }
 
 
-    public void displayinternetnotconnected()
-    {
+    public void displayinternetnotconnected() {
         Snackbar.make(findViewById(R.id.layout), "Internet is not Connected", Snackbar.LENGTH_INDEFINITE)
                 .setAction("Refresh", new View.OnClickListener() {
                     @Override
                     public void onClick(View view) {
 
-                       if(!isNetworkAvailable())
-                       {
-                           displayinternetnotconnected();
-                       }
-                       else
-                       {
-                           getthelocation();
-                       }
+                        if (!isNetworkAvailable()) {
+                            displayinternetnotconnected();
+                        } else {
+                            getthelocation();
+                        }
 
                     }
                 })
-                .setActionTextColor(getResources().getColor(android.R.color.holo_red_light ))
+                .setActionTextColor(getResources().getColor(android.R.color.holo_red_light))
                 .show();
     }
 
@@ -1129,15 +1119,13 @@ public class NotificationReceiverActivity extends AppCompatActivity
             requestPermissions();
             return;
         }
-        if(getGeofencesAdded())
-        {
+        if (getGeofencesAdded()) {
             removeGeofences();
-        }
-        else {
+        } else {
             addGeofences();
         }
 
-        }
+    }
 
     /**
      * Adds geofences. This method should be called after the user has granted the location
@@ -1184,6 +1172,7 @@ public class NotificationReceiverActivity extends AppCompatActivity
     /**
      * Runs when the result of calling {@link #addGeofences()} and/or {@link #removeGeofences()}
      * is available.
+     *
      * @param task the resulting Task, containing either a result or error.
      */
     @Override
@@ -1230,7 +1219,7 @@ public class NotificationReceiverActivity extends AppCompatActivity
     private void populateGeofenceList(int postion) {
 
 
-     // setting geo fence dynamically
+        // setting geo fence dynamically
 
         mGeofenceList.add(new Geofence.Builder()
                 // Set the request ID of the geofence. This is a string to identify this
@@ -1257,13 +1246,7 @@ public class NotificationReceiverActivity extends AppCompatActivity
                 .build());
 
 
-     //
-
-
-
-
-
-
+        //
 
 
 //     if(new LocalData(getApplicationContext()).getuserselctedlocation().equals("HO , The Grand Hotel"))
@@ -1370,10 +1353,9 @@ public class NotificationReceiverActivity extends AppCompatActivity
 //            mAddGeofencesButton.setEnabled(true);
 //            mRemoveGeofencesButton.setEnabled(false);
 //        }
-        if(getGeofencesAdded()) {
+        if (getGeofencesAdded()) {
             mAddGeofencesButton.setText("Off Geofence");
-        }else
-        {
+        } else {
             mAddGeofencesButton.setText("On Geofence");
         }
 
@@ -1542,7 +1524,6 @@ public class NotificationReceiverActivity extends AppCompatActivity
             }
 
 
-
         }
     }
 
@@ -1586,7 +1567,6 @@ public class NotificationReceiverActivity extends AppCompatActivity
         PendingIntent resultPendingIntent = stackBuilder.getPendingIntent(0, PendingIntent.FLAG_UPDATE_CURRENT);
 
 
-
         NotificationCompat.Builder builder = new NotificationCompat.Builder(this, CHANNEL_ID)
                 .setContentTitle("Hero Motocorp")
                 .setContentText("In and Out Geo Fence")
@@ -1618,34 +1598,60 @@ public class NotificationReceiverActivity extends AppCompatActivity
     }
 
 
+    // get the distance between two cordinates
+
+
     //
 
-    public void senddatatoserver(String event)
-    {
+
+    public double getthedifferenceinmeters() {
+
+        LatLng usercurrent = new LatLng(usercurrentlocation.latitude, usercurrentlocation.longitude);
+        LatLng officelocation = new LatLng(Double.valueOf(new LocalData(getApplicationContext()).getuserselectedlatitude()),Double.valueOf(new LocalData(getApplicationContext()).getuserselectedlongitude()));
+
+        Location locationA = new Location("point A");
+        locationA.setLatitude(usercurrent.latitude);
+        locationA.setLongitude(usercurrent.longitude);
+
+
+        Location locationB = new Location("point B");
+        locationB.setLatitude(officelocation.latitude);
+        locationB.setLongitude(officelocation.longitude);
+
+        double distance = locationA.distanceTo(locationB);
+
+        return distance;
+    }
+
+
+    public void senddatatoserver(String event) {
 
             String url = ServerUrl.sendData;
-            HashMap<String,String> params = new HashMap<>();
-            if(event.equals("punchin"))
-            {
+            HashMap<String, String> params = new HashMap<>();
+            if (event.equals("punchin")) {
                 SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
                 String currentDateandTime = sdf.format(new Date());
 
                 params.put("in_punch", currentDateandTime);
-                params.put("out_punch","");
-            }
-            else
-            {
+                params.put("out_punch", "");
+            } else {
                 SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
                 String currentDateandTime = sdf.format(new Date());
 
-                params.put("in_punch","");
-                params.put("out_punch",currentDateandTime);
+                params.put("in_punch", "");
+                params.put("out_punch", currentDateandTime);
             }
-            params.put("ec_no",new LocalData(getApplicationContext()).getuserecno());
+
+            params.put("distance",String.valueOf(getthedifferenceinmeters()));
+            params.put("name", new LocalData(getApplicationContext()).getName());
+            params.put("versionname", new LocalData(getApplicationContext()).getVersionName());
+
+
+            params.put("ec_no", new LocalData(getApplicationContext()).getuserecno());
             //params.put("ec_no","10046");
-            params.put("location",new LocalData(getApplicationContext()).getuserselctedlocation());
-            params.put("status","M");
-            params.put("coordinates","Latitude : "+usercurrentlocation.latitude+" , Longitude : "+usercurrentlocation.longitude);
+            params.put("location", new LocalData(getApplicationContext()).getuserselctedlocation());
+            params.put("status", "M");
+            params.put("coordinates", "Latitude : " + usercurrentlocation.latitude + " , Longitude : " + usercurrentlocation.longitude);
 
 
             RequestQueue requestQueue = Volley.newRequestQueue(getApplicationContext());
@@ -1659,29 +1665,25 @@ public class NotificationReceiverActivity extends AppCompatActivity
 //                    if(response.optString("status").equals("success")) {
 
 
-                        Log.wtf("geoattendecneresponse",response.toString());
+                    Log.wtf("geoattendecneresponse", response.toString());
 
-                       if(response.optString("msg").equals("Success"))
-                       {
-                          // Toast.makeText(getApplicationContext(),response.optString("msg"),Toast.LENGTH_SHORT).show();
+                    if (response.optString("msg").equals("Success")) {
+                        // Toast.makeText(getApplicationContext(),response.optString("msg"),Toast.LENGTH_SHORT).show();
 
 
-                        if(event.equals("punchin"))
-                           {
-                               new LocalData(getApplicationContext()).setpunchinandpounchout("punchout");
-                               punchinouttext.setText("Punch Out");
+                        if (event.equals("punchin")) {
+                            new LocalData(getApplicationContext()).setpunchinandpounchout("punchout");
+                            punchinouttext.setText("Punch Out");
 
-                               String date = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(new Date());
+                            String date = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(new Date());
 
-                               new LocalData(getApplicationContext()).setuserlastpunchinpunchoutdate(date);
+                            new LocalData(getApplicationContext()).setuserlastpunchinpunchoutdate(date);
 
-                           }
+                        }
 
-                       }
-                       else if(response.optString("msg").equals("No update"))
-                       {
+                    } else if (response.optString("msg").equals("No update")) {
 
-                       }
+                    }
 
 //                    }else
 //                    {
@@ -1689,16 +1691,13 @@ public class NotificationReceiverActivity extends AppCompatActivity
 //                    }
                 }
 
-            }, new Response.ErrorListener()
-            {
+            }, new Response.ErrorListener() {
                 @Override
                 public void onErrorResponse(VolleyError error) {
-                    Log.wtf("Error",error.toString());
+                    Log.wtf("Error", error.toString());
                 }
-            })
-            {
-                public Map<String, String> getHeaders() throws AuthFailureError
-                {
+            }) {
+                public Map<String, String> getHeaders() throws AuthFailureError {
                     HashMap<String, String> headers = new HashMap<String, String>();
                     headers.put("Content-Type", "application/json; charset=utf-8");
                     headers.put("User-agent", System.getProperty("http.agent"));
@@ -1709,12 +1708,50 @@ public class NotificationReceiverActivity extends AppCompatActivity
             requestQueue.add(jsonObjectRequest);
 
 
+
+
+
+
+            // saving data to local
+            ArrayList<GeoFenceArraylist> arraylists = new ArrayList<>();
+            if(event.equals("punchout"))
+            {
+                if(new LocalData(getApplicationContext()).getDime().equals("0"))
+                {
+
+                }
+                else
+                {
+                    Gson gson = new Gson();
+                    String json = new LocalData(getApplicationContext()).getDime();
+                    Type type = new TypeToken<ArrayList<GeoFenceArraylist>>() {}.getType();
+                    arraylists =  gson.fromJson(json, type);
+                }
+
+
+                Date currentTime = Calendar.getInstance().getTime();
+
+                GeoFenceArraylist data = new GeoFenceArraylist();
+                data.setEvent("Exited : "+new LocalData(getApplicationContext()).getuserselctedlocation());
+                data.setName("Hero Office");
+                data.setTime(String.valueOf(currentTime));
+                data.setProvider("Manually Geo Fence");
+
+                arraylists.add(data);
+
+
+
+                // save the task list to preference
+
+                Gson gson1 = new Gson();
+                String json1 = gson1.toJson(arraylists);
+                new LocalData(getApplicationContext()).setDime(json1);
+            }
+
     }
 
 
-
-    public void getthelocation()
-    {
+    public void getthelocation() {
 
         opentime = 1;
 
@@ -1729,9 +1766,8 @@ public class NotificationReceiverActivity extends AppCompatActivity
 // To dismiss the dialog
 
 
-
         String url = ServerUrl.getthelocation;
-        HashMap<String,String> params = new HashMap<>();
+        HashMap<String, String> params = new HashMap<>();
 
 
         RequestQueue requestQueue = Volley.newRequestQueue(getApplicationContext());
@@ -1743,10 +1779,9 @@ public class NotificationReceiverActivity extends AppCompatActivity
             @Override
             public void onResponse(JSONArray response) {
 
-                Log.wtf("locationresponse",response.toString());
+                Log.wtf("locationresponse", response.toString());
                 progress.dismiss();
-                for(int i=0;i<response.length();i++)
-                {
+                for (int i = 0; i < response.length(); i++) {
                     JSONObject jsonObject = response.optJSONObject(i);
 
                     LocationDataGetterSetter data = new LocationDataGetterSetter();
@@ -1759,55 +1794,40 @@ public class NotificationReceiverActivity extends AppCompatActivity
                 }
 
 
-
                 contacts.add("Select Location");
-                for(int i=0;i<locationdata.size();i++)
-                {
+                for (int i = 0; i < locationdata.size(); i++) {
                     contacts.add(locationdata.get(i).getLocation());
 
 
                 }
 
 
-
                 ArrayAdapter<String> adapter =
-                        new ArrayAdapter<String>(getApplicationContext(),  R.layout.simple_spinner_item, contacts);
-                adapter.setDropDownViewResource( android.R.layout.simple_spinner_dropdown_item);
+                        new ArrayAdapter<String>(getApplicationContext(), R.layout.simple_spinner_item, contacts);
+                adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
 
                 spinner.setAdapter(adapter);
 
 
                 // set the user choosed to the spinner
 
-                try
-                {
-                    if(new LocalData(getApplicationContext()).getuserselctedlocation().equals("")) {
+                try {
+                    if (new LocalData(getApplicationContext()).getuserselctedlocation().equals("")) {
                         spinner.setSelection(1);
-                    }
-                    else
-                    {
-                        for(int i=0;i<contacts.size();i++)
-                        {
-                            if(new LocalData(getApplicationContext()).getuserselctedlocation().equals(contacts.get(i)))
-                            {
+                    } else {
+                        for (int i = 0; i < contacts.size(); i++) {
+                            if (new LocalData(getApplicationContext()).getuserselctedlocation().equals(contacts.get(i))) {
                                 spinner.setSelection(i);
                             }
 
                         }
                     }
-                }
-                catch (Exception e)
-                {
+                } catch (Exception e) {
 
                 }
-
-
-
-
 
 
                 //
-
 
 
             }
@@ -1815,12 +1835,10 @@ public class NotificationReceiverActivity extends AppCompatActivity
         }, new Response.ErrorListener() {
             @Override
             public void onErrorResponse(VolleyError error) {
-                Log.wtf("Error",error.toString());
+                Log.wtf("Error", error.toString());
             }
-        })
-        {
-            public Map<String, String> getHeaders() throws AuthFailureError
-            {
+        }) {
+            public Map<String, String> getHeaders() throws AuthFailureError {
                 HashMap<String, String> headers = new HashMap<String, String>();
                 headers.put("Content-Type", "application/json; charset=utf-8");
                 headers.put("User-agent", System.getProperty("http.agent"));
@@ -1844,8 +1862,6 @@ public class NotificationReceiverActivity extends AppCompatActivity
         super.onPause();
 
         // for background location update
-
-
 
 
         //

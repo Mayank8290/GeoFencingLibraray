@@ -1,11 +1,13 @@
 package com.google.android.gms.location.sample.geofencing;
 
 import android.content.Context;
+import android.graphics.Color;
 import android.support.annotation.NonNull;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 
 import com.google.android.gms.location.sample.geofencing.GetterSetter.GeoFenceArraylist;
@@ -45,9 +47,37 @@ public class RecyclerViewAdapterclass extends RecyclerView.Adapter<RecyclerViewA
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
 
         holder.name.setText("Name : "+arraylists.get(position).getName());
-        holder.time.setText("Time : "+arraylists.get(position).getTime());
-        holder.event.setText("Event : "+arraylists.get(position).getEvent());
+
+        holder.time.setText(arraylists.get(position).getTime().substring(0,19));
+
+        if(arraylists.get(position).getEvent().contains("Entered"))
+        {
+            holder.event.setText(arraylists.get(position).getEvent().substring(9));
+        }
+        else if(arraylists.get(position).getEvent().contains("Exited"))
+        {
+            holder.event.setText(arraylists.get(position).getEvent().substring(8));
+        }
+
+
         holder.provider.setText("Provider : "+arraylists.get(position).getProvider());
+
+
+
+
+
+
+        if(arraylists.get(position).getEvent().contains("Entered"))
+        {
+            holder.eventback.setBackgroundColor(Color.parseColor("#EB984E"));
+            holder.eventtext.setText("IN");
+        }
+        else
+        {
+            holder.eventback.setBackgroundColor(Color.parseColor("#E74C3C"));
+            holder.eventtext.setText("OUT");
+        }
+
 
     }
 
@@ -59,7 +89,8 @@ public class RecyclerViewAdapterclass extends RecyclerView.Adapter<RecyclerViewA
     public class ViewHolder extends RecyclerView.ViewHolder
     {
 
-        TextView name,time,event,provider;
+        TextView name,time,event,provider,eventtext;
+        RelativeLayout eventback;
 
         public ViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -68,6 +99,9 @@ public class RecyclerViewAdapterclass extends RecyclerView.Adapter<RecyclerViewA
             time = itemView.findViewById(R.id.time);
             event = itemView.findViewById(R.id.event);
             provider = itemView.findViewById(R.id.provider);
+
+            eventback = itemView.findViewById(R.id.eventback);
+            eventtext = itemView.findViewById(R.id.eventtext);
 
         }
     }

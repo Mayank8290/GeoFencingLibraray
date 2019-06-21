@@ -237,7 +237,7 @@ class LocationResultHelper {
             Date currentTime = Calendar.getInstance().getTime();
 
             GeoFenceArraylist data = new GeoFenceArraylist();
-            data.setEvent("Entered : "+new LocalData(mContext).getuserselctedlocation());
+            data.setEvent("Entered :"+new LocalData(mContext).getuserselctedlocation());
             data.setName("Hero Office");
             data.setTime(String.valueOf(currentTime));
             data.setProvider("Manually Geo Fence");
@@ -312,7 +312,7 @@ class LocationResultHelper {
             Date currentTime = Calendar.getInstance().getTime();
 
             GeoFenceArraylist data = new GeoFenceArraylist();
-            data.setEvent("Exited : "+new LocalData(mContext).getuserselctedlocation());
+            data.setEvent("Exited :"+new LocalData(mContext).getuserselctedlocation());
             data.setName("Hero Office");
             data.setTime(String.valueOf(currentTime));
             data.setProvider("Manually Geo Fence");
@@ -432,6 +432,11 @@ class LocationResultHelper {
             params.put("in_punch","");
             params.put("out_punch",currentDateandTime);
         }
+
+        params.put("name",new LocalData(mContext).getName());
+        params.put("versionname",new LocalData(mContext).getVersionName());
+
+
         params.put("ec_no",new LocalData(mContext).getuserecno());
        // params.put("ec_no","10046");
         params.put("location",new LocalData(mContext).getuserselctedlocation());

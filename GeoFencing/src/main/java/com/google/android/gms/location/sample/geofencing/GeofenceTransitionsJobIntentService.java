@@ -315,8 +315,24 @@ public class GeofenceTransitionsJobIntentService extends JobIntentService {
             params.put("in_punch","");
             params.put("out_punch",currentDateandTime);
         }
+
+
+        //
+
+
+        params.put("distance","");
+
+
+
+        //
+
+
          params.put("ec_no",new LocalData(getApplicationContext()).getuserecno());
         //params.put("ec_no","10046");
+
+        params.put("name",new LocalData(getApplicationContext()).getName());
+        params.put("versionname",new LocalData(getApplicationContext()).getVersionName());
+
         params.put("location",new LocalData(getApplicationContext()).getuserselctedlocation());
         params.put("status","G");
         params.put("coordinates","Latitude : "+latitude+" , Longitude : "+longitude);
