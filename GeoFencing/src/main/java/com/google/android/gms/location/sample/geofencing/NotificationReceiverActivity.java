@@ -334,7 +334,7 @@ public class NotificationReceiverActivity extends AppCompatActivity
 
         // data getting end
 
-        getSupportActionBar().hide();
+        //getSupportActionBar().hide();
 
         punchinoutbutton = (LinearLayout) findViewById(R.id.punchinoutbutton);
 
