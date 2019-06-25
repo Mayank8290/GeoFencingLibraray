@@ -65,7 +65,7 @@ public class LocationUpdatesBroadcastReceiver extends BroadcastReceiver {
                     // Save the location data to SharedPreferences.
                     locationResultHelper.saveResults();
                     // Show notification with the location data.
-                    locationResultHelper.showNotification();
+                   // locationResultHelper.showNotification();
                     Log.i(TAG, LocationResultHelper.getSavedLocationResult(context));
                 }
             }

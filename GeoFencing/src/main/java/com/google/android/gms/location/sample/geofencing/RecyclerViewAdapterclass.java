@@ -72,7 +72,7 @@ public class RecyclerViewAdapterclass extends RecyclerView.Adapter<RecyclerViewA
             holder.eventback.setBackgroundColor(Color.parseColor("#EB984E"));
             holder.eventtext.setText("IN");
         }
-        else
+        else if(arraylists.get(position).getEvent().contains("Exited"))
         {
             holder.eventback.setBackgroundColor(Color.parseColor("#E74C3C"));
             holder.eventtext.setText("OUT");

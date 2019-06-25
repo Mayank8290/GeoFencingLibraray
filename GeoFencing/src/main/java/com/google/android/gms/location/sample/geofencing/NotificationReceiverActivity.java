@@ -2,9 +2,11 @@ package com.google.android.gms.location.sample.geofencing;
 
 
 import com.android.volley.AuthFailureError;
+import com.android.volley.DefaultRetryPolicy;
 import com.android.volley.Request;
 import com.android.volley.RequestQueue;
 import com.android.volley.Response;
+import com.android.volley.RetryPolicy;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.JsonArrayRequest;
 import com.android.volley.toolbox.JsonObjectRequest;
@@ -92,6 +94,7 @@ import android.widget.LinearLayout;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
+
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -282,6 +285,7 @@ public class NotificationReceiverActivity extends AppCompatActivity
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
         setContentView(R.layout.activity_notification_receiver);
 
 
@@ -328,13 +332,14 @@ public class NotificationReceiverActivity extends AppCompatActivity
             // Toast.makeText(getApplicationContext(),"Ec No : "+Ecno+", Location : "+userLocation,Toast.LENGTH_SHORT).show();
 
         } catch (Exception e) {
+
             //Toast.makeText(getApplicationContext(),"Data Not Getting",Toast.LENGTH_SHORT).show();
         }
 
 
         // data getting end
 
-        //getSupportActionBar().hide();
+        getSupportActionBar().hide();
 
         punchinoutbutton = (LinearLayout) findViewById(R.id.punchinoutbutton);
 
@@ -1656,10 +1661,7 @@ public class NotificationReceiverActivity extends AppCompatActivity
             params.put("distance",String.valueOf(getthedifferenceinmeters()));
             params.put("name", new LocalData(getApplicationContext()).getName());
             params.put("versionname", new LocalData(getApplicationContext()).getVersionName());
-
-
             params.put("ec_no", new LocalData(getApplicationContext()).getuserecno());
-            //params.put("ec_no","10046");
             params.put("location", new LocalData(getApplicationContext()).getuserselctedlocation());
             params.put("status", "M");
             params.put("coordinates", "Latitude : " + usercurrentlocation.latitude + " , Longitude : " + usercurrentlocation.longitude);
@@ -1856,6 +1858,10 @@ public class NotificationReceiverActivity extends AppCompatActivity
                 return headers;
             }
         };
+
+        int socketTimeout = 30000;//30 seconds - change to what you want
+        RetryPolicy policy = new DefaultRetryPolicy(socketTimeout, DefaultRetryPolicy.DEFAULT_MAX_RETRIES, DefaultRetryPolicy.DEFAULT_BACKOFF_MULT);
+        jsonObjectRequest.setRetryPolicy(policy);
 
         requestQueue.add(jsonObjectRequest);
 
