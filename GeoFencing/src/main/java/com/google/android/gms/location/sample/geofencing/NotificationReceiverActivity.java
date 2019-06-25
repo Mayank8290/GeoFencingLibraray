@@ -372,51 +372,24 @@ public class NotificationReceiverActivity extends AppCompatActivity
             @Override
             public void onClick(View v) {
 
-                if(Double.valueOf(getthedifferenceinmeters())  > Double.valueOf(new LocalData(getApplicationContext()).getuserselectedradius()))
+
+                try
                 {
-                    Toast.makeText(getApplicationContext(),"Your current location is not matching any Hero office location.",Toast.LENGTH_LONG).show();
-                    return;
-                }else if (new LocalData(getApplicationContext()).getpunchinandpounchout().equals("punchin")) {
+                    if(Double.valueOf(getthedifferenceinmeters())  > Double.valueOf(new LocalData(getApplicationContext()).getuserselectedradius()))
+                    {
+                        Toast.makeText(getApplicationContext(),"Your current location is not matching any Hero office location.",Toast.LENGTH_LONG).show();
+                        return;
+                    }else if (new LocalData(getApplicationContext()).getpunchinandpounchout().equals("punchin")) {
 
 
-                    //
+                        //
 
 
-                    // alert user for punch
+                        // alert user for punch
 
-                    new AlertDialog.Builder(NotificationReceiverActivity.this)
-                            .setTitle("Punch In")
-                            .setMessage("Are you sure you want to punch in?")
-
-                            // Specifying a listener allows you to take an action before dismissing the dialog.
-                            // The dialog is automatically dismissed when a dialog button is clicked.
-                            .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
-                                public void onClick(DialogInterface dialog, int which) {
-                                    // Continue with delete operation
-
-                                    senddatatoserver("punchin");
-                                }
-                            })
-
-                            // A null listener allows the button to dismiss the dialog and take no further action.
-                            .setNegativeButton(android.R.string.no, null)
-                            .setIcon(android.R.drawable.ic_dialog_alert)
-                            .show();
-
-
-                } else if (new LocalData(getApplicationContext()).getpunchinandpounchout().equals("punchout")) {
-
-                    // if punch in already done
-
-                    LinearLayout b = (LinearLayout) v;
-                    TextView buttonText = (TextView) b.getChildAt(1);
-                    String text = buttonText.getText().toString();
-                    if (text.equals("Punch In")) {
-                        Toast.makeText(getApplicationContext(), "Punch In Already Done From your location", Toast.LENGTH_SHORT).show();
-                    } else {
                         new AlertDialog.Builder(NotificationReceiverActivity.this)
-                                .setTitle("Punch Out")
-                                .setMessage("Are you sure you want to punch out?")
+                                .setTitle("Punch In")
+                                .setMessage("Are you sure you want to punch in?")
 
                                 // Specifying a listener allows you to take an action before dismissing the dialog.
                                 // The dialog is automatically dismissed when a dialog button is clicked.
@@ -424,7 +397,7 @@ public class NotificationReceiverActivity extends AppCompatActivity
                                     public void onClick(DialogInterface dialog, int which) {
                                         // Continue with delete operation
 
-                                        senddatatoserver("punchout");
+                                        senddatatoserver("punchin");
                                     }
                                 })
 
@@ -432,10 +405,48 @@ public class NotificationReceiverActivity extends AppCompatActivity
                                 .setNegativeButton(android.R.string.no, null)
                                 .setIcon(android.R.drawable.ic_dialog_alert)
                                 .show();
+
+
+                    } else if (new LocalData(getApplicationContext()).getpunchinandpounchout().equals("punchout")) {
+
+                        // if punch in already done
+
+                        LinearLayout b = (LinearLayout) v;
+                        TextView buttonText = (TextView) b.getChildAt(1);
+                        String text = buttonText.getText().toString();
+                        if (text.equals("Punch In")) {
+                            Toast.makeText(getApplicationContext(), "Punch In Already Done From your location", Toast.LENGTH_SHORT).show();
+                        } else {
+                            new AlertDialog.Builder(NotificationReceiverActivity.this)
+                                    .setTitle("Punch Out")
+                                    .setMessage("Are you sure you want to punch out?")
+
+                                    // Specifying a listener allows you to take an action before dismissing the dialog.
+                                    // The dialog is automatically dismissed when a dialog button is clicked.
+                                    .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
+                                        public void onClick(DialogInterface dialog, int which) {
+                                            // Continue with delete operation
+
+                                            senddatatoserver("punchout");
+                                        }
+                                    })
+
+                                    // A null listener allows the button to dismiss the dialog and take no further action.
+                                    .setNegativeButton(android.R.string.no, null)
+                                    .setIcon(android.R.drawable.ic_dialog_alert)
+                                    .show();
+                        }
+
+
                     }
-
-
                 }
+                catch (Exception e)
+                {
+                   Toast.makeText(getApplicationContext(),"Location not updated yet",Toast.LENGTH_SHORT).show();
+                }
+
+
+
 
             }
         });
