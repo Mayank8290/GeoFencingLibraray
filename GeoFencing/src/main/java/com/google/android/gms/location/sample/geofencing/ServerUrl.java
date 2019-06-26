@@ -18,5 +18,7 @@ public class ServerUrl {
     public static String getthelocation = "http://103.247.208.216/EmployeeAppVapt1/app/Attendance/Geo/Location";
 
 
+    public static String getHistory = "http://103.247.208.216/EmployeeAppVapt1/app/Attendance/Geo/History";
+
 
 }

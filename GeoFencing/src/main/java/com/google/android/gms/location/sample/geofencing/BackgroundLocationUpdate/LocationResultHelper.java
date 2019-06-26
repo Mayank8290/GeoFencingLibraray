@@ -129,6 +129,10 @@ class LocationResultHelper {
                 .putString(KEY_LOCATION_UPDATES_RESULT, getLocationResultTitle() + "\n" +
                         getLocationResultText())
                 .apply();
+
+
+      //  PreferenceManager.getDefaultSharedPreferences(mContext).edit().putString("counter",)
+
     }
 
     /**

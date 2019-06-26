@@ -271,7 +271,18 @@ public class GeofenceTransitionsJobIntentService extends JobIntentService {
         //
 
 
-        senddatatoserver(event,Latitude,Longitude);
+        if(event.equals("Entered")&& new LocalData(getApplicationContext()).getuserevent().equals("enter"))
+        {
+            senddatatoserver(event,Latitude,Longitude);
+        }
+        else if (event.equals("Exited") && new LocalData(getApplicationContext()).getuserevent().equals("exit"))
+        {
+            senddatatoserver(event,Latitude,Longitude);
+        }
+
+
+
+
 
     }
 
@@ -306,6 +317,9 @@ public class GeofenceTransitionsJobIntentService extends JobIntentService {
 
             params.put("in_punch", currentDateandTime);
             params.put("out_punch","");
+
+            new LocalData(getApplicationContext()).setuserevent("enter");
+
         }
         else
         {
@@ -314,6 +328,8 @@ public class GeofenceTransitionsJobIntentService extends JobIntentService {
 
             params.put("in_punch","");
             params.put("out_punch",currentDateandTime);
+
+            new LocalData(getApplicationContext()).setuserevent("exit");
         }
 
 
@@ -352,6 +368,8 @@ public class GeofenceTransitionsJobIntentService extends JobIntentService {
                 if(response.optString("msg").equals("Success"))
                 {
                     //Toast.makeText(getApplicationContext(),response.optString("msg"),Toast.LENGTH_SHORT).show();
+
+
 
 
                     if(event.equals("Entered"))

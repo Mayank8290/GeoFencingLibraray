@@ -19,10 +19,18 @@ import android.app.IntentService;
 import android.content.Context;
 import android.content.Intent;
 import android.location.Location;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
+import android.net.wifi.WifiManager;
+import android.os.Handler;
+import android.os.Looper;
 import android.util.Log;
+import android.widget.Toast;
 
 import com.google.android.gms.location.LocationResult;
 
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.List;
 
 /**
@@ -63,12 +71,87 @@ public class LocationUpdatesIntentService extends IntentService {
                             locations);
                     // Save the location data to SharedPreferences.
                     locationResultHelper.saveResults();
-                    // Show notification with the location data.
-                  //  locationResultHelper.showNotification();
+                    if(iswifienable())
+                    {
+
+                        Log.wtf("Wifi state","Wifi or Hotspot is enabled");
+
+//                        new Handler(Looper.getMainLooper()).post(new Runnable() {
+//                            @Override
+//                            public void run() {
+//                                Toast.makeText(getApplicationContext(),"Wifi or Hotspot is enabled",Toast.LENGTH_SHORT).show();
+//                            }
+//                        });
+                    }
+                    else
+                    {
+                        Log.wtf("Wifi state","Wifi or Hotspot not enabled");
+
+                        locationResultHelper.showNotification();
+
+                    }
+
+
                     Log.i(TAG, LocationResultHelper.getSavedLocationResult(this));
+                    // Show notification with the location data.
+
+
+
+
                 }
             }
         }
     }
+
+    public boolean iswifienable()
+    {
+
+        boolean isWifiAPenabled = false;
+
+
+        // checking if wifi enable or not
+
+        WifiManager wifiManager = (WifiManager) getApplicationContext()
+                .getSystemService(WIFI_SERVICE);
+
+        if (wifiManager.isWifiEnabled()) {
+            // Do whatever
+            isWifiAPenabled = true;
+        }
+
+        //
+
+        if(isWifiAPenabled)
+        {
+            return true;
+        }
+
+
+
+        WifiManager wifi = (WifiManager) getApplication().getApplicationContext().getSystemService(Context.WIFI_SERVICE);
+        Method[] wmMethods = wifi.getClass().getDeclaredMethods();
+        for (Method method: wmMethods)
+
+        {
+            if (method.getName().equals("isWifiApEnabled")) {
+
+                try {
+                    isWifiAPenabled = (boolean) method.invoke(wifi);
+                } catch (IllegalArgumentException e) {
+                    e.printStackTrace();
+                } catch (IllegalAccessException e) {
+                    e.printStackTrace();
+                } catch (InvocationTargetException e) {
+                    e.printStackTrace();
+                }
+            }
+
+            //
+
+        }
+        return isWifiAPenabled;
+    }
+
+
 }
 

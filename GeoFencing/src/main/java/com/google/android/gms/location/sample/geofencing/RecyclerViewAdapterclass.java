@@ -11,6 +11,7 @@ import android.widget.RelativeLayout;
 import android.widget.TextView;
 
 import com.google.android.gms.location.sample.geofencing.GetterSetter.GeoFenceArraylist;
+import com.google.android.gms.location.sample.geofencing.GetterSetter.HistoryData;
 
 import java.util.ArrayList;
 
@@ -19,11 +20,11 @@ import java.util.ArrayList;
 public class RecyclerViewAdapterclass extends RecyclerView.Adapter<RecyclerViewAdapterclass.ViewHolder> {
 
 
-    ArrayList<GeoFenceArraylist> arraylists = new ArrayList<>();
+    ArrayList<HistoryData> arraylists = new ArrayList<>();
     LayoutInflater layoutInflater;
     Context context;
 
-    public void setData(ArrayList<GeoFenceArraylist> arraylists)
+    public void setData(ArrayList<HistoryData> arraylists)
     {
         this.arraylists = arraylists;
         notifyItemRangeChanged(0,arraylists.size());
@@ -46,21 +47,23 @@ public class RecyclerViewAdapterclass extends RecyclerView.Adapter<RecyclerViewA
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
 
-        holder.name.setText("Name : "+arraylists.get(position).getName());
+        holder.name.setText("Name : "+arraylists.get(position).getLocation());
 
-        holder.time.setText(arraylists.get(position).getTime().substring(0,19));
+        holder.time.setText(arraylists.get(position).getTime());
 
-        if(arraylists.get(position).getEvent().contains("Entered"))
-        {
-            holder.event.setText(arraylists.get(position).getEvent().substring(9));
-        }
-        else if(arraylists.get(position).getEvent().contains("Exited"))
-        {
-            holder.event.setText(arraylists.get(position).getEvent().substring(8));
-        }
+        holder.event.setText(arraylists.get(position).getLocation());
+
+//        if(arraylists.get(position).getEvent().contains("Entered"))
+//        {
+//            holder.event.setText(arraylists.get(position).getEvent().substring(9));
+//        }
+//        else if(arraylists.get(position).getEvent().contains("Exited"))
+//        {
+//            holder.event.setText(arraylists.get(position).getEvent().substring(8));
+//        }
 
 
-        holder.provider.setText("Provider : "+arraylists.get(position).getProvider());
+      //  holder.provider.setText("Provider : "+arraylists.get(position).getProvider());
 
 
 

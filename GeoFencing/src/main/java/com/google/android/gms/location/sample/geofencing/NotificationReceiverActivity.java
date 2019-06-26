@@ -129,20 +129,20 @@ public class NotificationReceiverActivity extends AppCompatActivity
      * The desired interval for location updates. Inexact. Updates may be more or less frequent.
      */
 
-    private static final long UPDATE_INTERVAL = 10 * 1000;
+    private static final long UPDATE_INTERVAL = 10 * 6000;
 
     /**
      * The fastest rate for active location updates. Updates will never be more frequent
      * than this value, but they may be less frequent.
      */
 
-    private static final long FASTEST_UPDATE_INTERVAL = UPDATE_INTERVAL / 2;
+    private static final long FASTEST_UPDATE_INTERVAL = UPDATE_INTERVAL / 3;
 
     /**
      * The max time before batched results are delivered by location services. Results may be
      * delivered sooner than this interval.
      */
-    private static final long MAX_WAIT_TIME = UPDATE_INTERVAL * 3;
+    private static final long MAX_WAIT_TIME = UPDATE_INTERVAL * 2;
 
     /**
      * Stores parameters for requests to the FusedLocationProviderApi.
@@ -184,7 +184,7 @@ public class NotificationReceiverActivity extends AppCompatActivity
 
     LinearLayout punchinoutbutton;
 
-    LatLng usercurrentlocation;
+    LatLng usercurrentlocation ;
     // for geo fencing
 
     private static final String TAG = NotificationReceiverActivity.class.getSimpleName();
@@ -339,7 +339,7 @@ public class NotificationReceiverActivity extends AppCompatActivity
 
         // data getting end
 
-       // getSupportActionBar().hide();
+        //getSupportActionBar().hide();
 
         punchinoutbutton = (LinearLayout) findViewById(R.id.punchinoutbutton);
 
@@ -356,6 +356,7 @@ public class NotificationReceiverActivity extends AppCompatActivity
 
         }
 
+        String lastpunchdate = new LocalData(getApplicationContext()).getuserlastpunchinpunchoutdate();
 
         if (new LocalData(getApplicationContext()).getuserlastpunchinpunchoutdate().equals(todaydate)) {
             punchinouttext.setText("Punch Out");
@@ -363,6 +364,7 @@ public class NotificationReceiverActivity extends AppCompatActivity
         } else {
             new LocalData(getApplicationContext()).setpunchinandpounchout("punchin");
             new LocalData(getApplicationContext()).setuserlastpunchinpunchoutdate("");
+            punchinouttext.setText("Punch In");
         }
 
         openspinnerimage = (ImageView) findViewById(R.id.openspinnerimage);
@@ -447,6 +449,7 @@ public class NotificationReceiverActivity extends AppCompatActivity
                 }
                 catch (Exception e)
                 {
+                    Log.wtf("Error",e.toString());
                    Toast.makeText(getApplicationContext(),"Location not updated yet",Toast.LENGTH_SHORT).show();
                 }
 
@@ -1020,7 +1023,7 @@ public class NotificationReceiverActivity extends AppCompatActivity
                             // for Activity#requestPermissions for more details.
                             return;
                         }
-                        locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, MIN_TIME, MIN_DISTANCE, NotificationReceiverActivity.this); //You can also use LocationManager.GPS_PROVIDER and LocationManager.PASSIVE_PROVIDER
+                        locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, MIN_TIME, MIN_DISTANCE, NotificationReceiverActivity.this); //You can also use LocationManager.GPS_PROVIDER and LocationManager.PASSIVE_PROVIDER
                         if (!isNetworkAvailable()) {
                             displayinternetnotconnected();
                         } else {
@@ -1074,7 +1077,7 @@ public class NotificationReceiverActivity extends AppCompatActivity
                 // for Activity#requestPermissions for more details.
                 return;
             }
-            locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, MIN_TIME, MIN_DISTANCE, this); //You can also use LocationManager.GPS_PROVIDER and LocationManager.PASSIVE_PROVIDER
+            locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, MIN_TIME, MIN_DISTANCE, this); //You can also use LocationManager.GPS_PROVIDER and LocationManager.PASSIVE_PROVIDER
 
 
             //
@@ -1453,7 +1456,7 @@ public class NotificationReceiverActivity extends AppCompatActivity
         // Provide an additional rationale to the user. This would happen if the user denied the
         // request previously, but didn't check the "Don't ask again" checkbox.
         if (shouldProvideRationale) {
-            Log.i(TAG, "Displaying permission rationale to provide additional context.");
+            Log.wtf(TAG, "Displaying permission rationale to provide additional context.");
             showSnackbar(R.string.permission_rationale, android.R.string.ok,
                     new View.OnClickListener() {
                         @Override
@@ -1465,7 +1468,7 @@ public class NotificationReceiverActivity extends AppCompatActivity
                         }
                     });
         } else {
-            Log.i(TAG, "Requesting permission");
+            Log.wtf(TAG, "Requesting permission");
             // Request permission. It's possible this can be auto answered if device policy
             // sets the permission in a given state or the user denied the permission
             // previously and checked "Never ask again".
@@ -1502,7 +1505,7 @@ public class NotificationReceiverActivity extends AppCompatActivity
                     // for Activity#requestPermissions for more details.
                     return;
                 }
-                locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, MIN_TIME, MIN_DISTANCE, this); //You can also use LocationManager.GPS_PROVIDER and LocationManager.PASSIVE_PROVIDER
+                locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, MIN_TIME, MIN_DISTANCE, this); //You can also use LocationManager.GPS_PROVIDER and LocationManager.PASSIVE_PROVIDER
 
 
                 turnonlocationtwo();
@@ -1540,6 +1543,63 @@ public class NotificationReceiverActivity extends AppCompatActivity
             }
 
 
+        }
+        else if (requestCode == LOCATION_PERMISSION_REQUEST_CODE)
+        {
+            if (grantResults.length <= 0) {
+                // If user interaction was interrupted, the permission request is cancelled and you
+                // receive empty arrays.
+                Log.i(TAG, "User interaction was cancelled.");
+            } else if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                Log.i(TAG, "Permission granted.");
+
+
+                if (checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+                    // TODO: Consider calling
+                    //    Activity#requestPermissions
+                    // here to request the missing permissions, and then overriding
+                    //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+                    //                                          int[] grantResults)
+                    // to handle the case where the user grants the permission. See the documentation
+                    // for Activity#requestPermissions for more details.
+                    return;
+                }
+                locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, MIN_TIME, MIN_DISTANCE, this); //You can also use LocationManager.GPS_PROVIDER and LocationManager.PASSIVE_PROVIDER
+
+
+                turnonlocationtwo();
+                enableMyLocation();
+                performPendingGeofenceTask();
+
+            } else {
+                // Permission denied.
+                mPermissionDenied = true;
+                // Notify the user via a SnackBar that they have rejected a core permission for the
+                // app, which makes the Activity useless. In a real app, core permissions would
+                // typically be best requested during a welcome-screen flow.
+
+                // Additionally, it is important to remember that a permission might have been
+                // rejected without asking the user for permission (device policy or "Never ask
+                // again" prompts). Therefore, a user interface affordance is typically implemented
+                // when permissions are denied. Otherwise, your app could appear unresponsive to
+                // touches or interactions which have required permissions.
+                showSnackbar(R.string.permission_denied_explanation, R.string.settings,
+                        new View.OnClickListener() {
+                            @Override
+                            public void onClick(View view) {
+                                // Build intent that displays the App settings screen.
+                                Intent intent = new Intent();
+                                intent.setAction(
+                                        Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
+                                Uri uri = Uri.fromParts("package",
+                                        BuildConfig.APPLICATION_ID, null);
+                                intent.setData(uri);
+                                intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                                startActivity(intent);
+                            }
+                        });
+                mPendingGeofenceTask = NotificationReceiverActivity.PendingGeofenceTask.NONE;
+            }
         }
     }
 

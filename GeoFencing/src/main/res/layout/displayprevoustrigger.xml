@@ -6,9 +6,38 @@
     android:minHeight="100dp"
     android:layout_height="match_parent">
 
+    <RelativeLayout
+        android:id="@+id/opendatepicker"
+        android:gravity="center_horizontal"
+        android:layout_marginTop="5dp"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <ImageView
+            android:layout_marginLeft="5dp"
+            android:id="@+id/calendarview"
+            android:tint="#0099ED"
+            android:src="@mipmap/calendar"
+            android:layout_width="35dp"
+            android:layout_height="35dp" />
+
+        <TextView
+            android:textStyle="bold"
+            android:id="@+id/date"
+            android:layout_marginLeft="5dp"
+            android:layout_centerVertical="true"
+            android:layout_centerHorizontal="true"
+            android:layout_toRightOf="@+id/calendarview"
+            android:text="Today"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
+
+    </RelativeLayout>
 
     <android.support.v7.widget.RecyclerView
-        android:padding="10dp"
+        android:paddingLeft="10dp"
+        android:paddingRight="10dp"
+        android:paddingBottom="10dp"
         android:id="@+id/recyclerviewfence"
         android:layout_width="match_parent"
         android:layout_height="match_parent"></android.support.v7.widget.RecyclerView>
