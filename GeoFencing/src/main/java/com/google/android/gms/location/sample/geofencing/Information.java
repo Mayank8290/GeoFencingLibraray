@@ -23,6 +23,9 @@ public class Information extends DialogFragment {
         if (getDialog() != null && getDialog().getWindow() != null) {
             getDialog().getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
             getDialog().getWindow().requestFeature(Window.FEATURE_NO_TITLE);
+//            int width = getResources().getDimensionPixelSize(R.dimen.popup_width);
+//            int height = getResources().getDimensionPixelSize(R.dimen.popup_height);
+//            getDialog().getWindow().setLayout(300, 150);
         }
         return view;
     }

@@ -136,13 +136,13 @@ public class NotificationReceiverActivity extends AppCompatActivity
      * than this value, but they may be less frequent.
      */
 
-    private static final long FASTEST_UPDATE_INTERVAL = UPDATE_INTERVAL / 3;
+    private static final long FASTEST_UPDATE_INTERVAL = UPDATE_INTERVAL / 2;
 
     /**
      * The max time before batched results are delivered by location services. Results may be
      * delivered sooner than this interval.
      */
-    private static final long MAX_WAIT_TIME = UPDATE_INTERVAL * 2;
+    private static final long MAX_WAIT_TIME = UPDATE_INTERVAL * 3;
 
     /**
      * Stores parameters for requests to the FusedLocationProviderApi.
@@ -309,7 +309,7 @@ public class NotificationReceiverActivity extends AppCompatActivity
 
                 FragmentManager fm = getSupportFragmentManager();
                 Information forgotPasswordDialog = new Information();
-                forgotPasswordDialog.show(fm, "redemm");
+                forgotPasswordDialog.show(fm, "redemms");
 
             }
         });
@@ -325,7 +325,7 @@ public class NotificationReceiverActivity extends AppCompatActivity
 
             new LocalData(getApplicationContext()).setVersionName(version);
 
-
+            String testecno = "100000";
             new LocalData(getApplicationContext()).setuserecno(Ecno);
             new LocalData(getApplicationContext()).setName(name);
 
@@ -339,7 +339,7 @@ public class NotificationReceiverActivity extends AppCompatActivity
 
         // data getting end
 
-        //getSupportActionBar().hide();
+       // getSupportActionBar().hide();
 
         punchinoutbutton = (LinearLayout) findViewById(R.id.punchinoutbutton);
 
@@ -515,7 +515,7 @@ public class NotificationReceiverActivity extends AppCompatActivity
                     String location = locationdata.get(position - 1).getLocation();
                     mGeofenceList.clear();
 
-                    if (!location.equals(new LocalData(getApplicationContext()).getuserselctedlocation())) {
+//                    if (!location.equals(new LocalData(getApplicationContext()).getuserselctedlocation())) {
 
                         populateGeofenceList(position - 1);
                         mMap.clear();
@@ -551,16 +551,21 @@ public class NotificationReceiverActivity extends AppCompatActivity
 
                         requestLocationUpdates();
 
-                    } else {
-                        mMap.clear();
-                        LatLng geofencelatLng = new LatLng(Double.valueOf(locationdata.get(position - 1).getLatitude()), Double.valueOf(locationdata.get(position - 1).getLongitude()));
-                        mMap.addCircle(new CircleOptions()
-                                .center(geofencelatLng)
-                                .radius(Float.valueOf(locationdata.get(position - 1).getRadius()))
-                                .strokeWidth(0f)
-                                .fillColor(0x5500ff00));
-                        // Toast.makeText(getApplicationContext(),"Already Added",Toast.LENGTH_LONG).show();
-                    }
+                    //}
+//                    else {
+//                        mMap.clear();
+//                        LatLng geofencelatLng = new LatLng(Double.valueOf(locationdata.get(position - 1).getLatitude()), Double.valueOf(locationdata.get(position - 1).getLongitude()));
+//                        mMap.addCircle(new CircleOptions()
+//                                .center(geofencelatLng)
+//                                .radius(Float.valueOf(locationdata.get(position - 1).getRadius()))
+//                                .strokeWidth(0f)
+//                                .fillColor(0x5500ff00));
+//
+//                        removeGeofences();
+//                        getthelocation();
+//
+//                        // Toast.makeText(getApplicationContext(),"Already Added",Toast.LENGTH_LONG).show();
+//                    }
 
                 } else {
 
@@ -1203,7 +1208,16 @@ public class NotificationReceiverActivity extends AppCompatActivity
 
             int messageId = getGeofencesAdded() ? R.string.geofences_added :
                     R.string.geofences_removed;
-            Toast.makeText(this, getString(messageId), Toast.LENGTH_SHORT).show();
+
+            if(getString(messageId).equals("Geofences added"))
+            {
+                Toast.makeText(this, getString(messageId), Toast.LENGTH_SHORT).show();
+            }
+
+
+
+            Log.wtf("geomessages",getString(messageId));
+
         } else {
             // Get the status code for the error and log it using a user-friendly message.
             String errorMessage = GeofenceErrorMessages.getErrorString(this, task.getException());
@@ -1833,7 +1847,7 @@ public class NotificationReceiverActivity extends AppCompatActivity
 
         ProgressDialog progress = new ProgressDialog(this);
         progress.setTitle("Loading");
-        progress.setMessage("Wait while loading...");
+        progress.setMessage("Please wait while loading...");
         progress.setCancelable(false); // disable dismiss by tapping outside of the dialog
         progress.show();
 // To dismiss the dialog

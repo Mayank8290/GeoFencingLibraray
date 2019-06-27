@@ -24,6 +24,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
+import android.net.wifi.WifiManager;
 import android.os.Build;
 
 
@@ -51,6 +52,8 @@ import com.google.gson.reflect.TypeToken;
 
 import org.json.JSONObject;
 
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.lang.reflect.Type;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -117,7 +120,27 @@ public class GeofenceTransitionsJobIntentService extends JobIntentService {
             String Latitude = String.valueOf(geofencingEvent.getTriggeringLocation().getLatitude());
             String Longitude = String.valueOf(geofencingEvent.getTriggeringLocation().getLongitude());
             // Send notification and log the transition details.
-            sendNotification(geofenceTransitionDetails,getTransitionString(geofenceTransition),Latitude,Longitude);
+            String event = getTransitionString(geofenceTransition);
+            String usercurrent = new LocalData(getApplicationContext()).getuserevent();
+            if(getTransitionString(geofenceTransition).equals("Entered")&& new LocalData(getApplicationContext()).getuserevent().equals("exit"))
+            {
+                if(!iswifienable())
+                {
+                    sendNotification(geofenceTransitionDetails,getTransitionString(geofenceTransition),Latitude,Longitude);
+                }
+
+            }
+            else if (getTransitionString(geofenceTransition).equals("Exited") && new LocalData(getApplicationContext()).getuserevent().equals("enter"))
+            {
+                if(!iswifienable())
+                {
+                    sendNotification(geofenceTransitionDetails,getTransitionString(geofenceTransition),Latitude,Longitude);
+                }
+
+
+            }
+
+
             Log.i(TAG, geofenceTransitionDetails);
         } else {
             // Log the error.
@@ -132,6 +155,60 @@ public class GeofenceTransitionsJobIntentService extends JobIntentService {
      * @param triggeringGeofences   The geofence(s) triggered.
      * @return                      The transition details formatted as String.
      */
+
+    // wifi checking
+
+    public boolean iswifienable()
+    {
+
+        boolean isWifiAPenabled = false;
+
+
+        // checking if wifi enable or not
+
+        WifiManager wifiManager = (WifiManager) getApplicationContext()
+                .getSystemService(WIFI_SERVICE);
+
+        if (wifiManager.isWifiEnabled()) {
+            // Do whatever
+            isWifiAPenabled = true;
+        }
+
+        //
+
+        if(isWifiAPenabled)
+        {
+            return true;
+        }
+
+
+
+        WifiManager wifi = (WifiManager) getApplication().getApplicationContext().getSystemService(Context.WIFI_SERVICE);
+        Method[] wmMethods = wifi.getClass().getDeclaredMethods();
+        for (Method method: wmMethods)
+
+        {
+            if (method.getName().equals("isWifiApEnabled")) {
+
+                try {
+                    isWifiAPenabled = (boolean) method.invoke(wifi);
+                } catch (IllegalArgumentException e) {
+                    e.printStackTrace();
+                } catch (IllegalAccessException e) {
+                    e.printStackTrace();
+                } catch (InvocationTargetException e) {
+                    e.printStackTrace();
+                }
+            }
+
+            //
+
+        }
+        return isWifiAPenabled;
+    }
+
+
+    //
     private String getGeofenceTransitionDetails(
             int geofenceTransition,
             List<Geofence> triggeringGeofences) {
@@ -271,17 +348,7 @@ public class GeofenceTransitionsJobIntentService extends JobIntentService {
         //
 
 
-        if(event.equals("Entered")&& new LocalData(getApplicationContext()).getuserevent().equals("enter"))
-        {
-            senddatatoserver(event,Latitude,Longitude);
-        }
-        else if (event.equals("Exited") && new LocalData(getApplicationContext()).getuserevent().equals("exit"))
-        {
-            senddatatoserver(event,Latitude,Longitude);
-        }
-
-
-
+        senddatatoserver(event,Latitude,Longitude);
 
 
     }

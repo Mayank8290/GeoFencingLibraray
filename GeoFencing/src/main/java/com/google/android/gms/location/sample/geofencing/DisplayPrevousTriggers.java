@@ -4,9 +4,11 @@ import android.app.DatePickerDialog;
 import android.app.ProgressDialog;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
+import android.os.Build;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.support.annotation.RequiresApi;
 import android.support.v4.app.DialogFragment;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
@@ -29,15 +31,19 @@ import com.android.volley.Response;
 import com.android.volley.RetryPolicy;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.JsonArrayRequest;
+import com.android.volley.toolbox.JsonObjectRequest;
 import com.android.volley.toolbox.Volley;
 import com.google.android.gms.location.sample.geofencing.GetterSetter.GeoFenceArraylist;
 import com.google.android.gms.location.sample.geofencing.GetterSetter.HistoryData;
 import com.google.android.gms.location.sample.geofencing.GetterSetter.LocationDataGetterSetter;
 import com.google.android.gms.location.sample.geofencing.LocalData.LocalData;
 import com.google.gson.Gson;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
 import com.google.gson.reflect.TypeToken;
 
 import org.json.JSONArray;
+import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.lang.reflect.Type;
@@ -62,7 +68,11 @@ public class DisplayPrevousTriggers extends DialogFragment {
 
     TextView Tdate;
 
+    pl.droidsonroids.gif.GifImageView loader;
+
     String selecteddate;
+
+    TextView textfornodata;
 
     @Nullable
     @Override
@@ -83,6 +93,7 @@ public class DisplayPrevousTriggers extends DialogFragment {
     }
 
 
+    @RequiresApi(api = Build.VERSION_CODES.KITKAT)
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
@@ -91,10 +102,15 @@ public class DisplayPrevousTriggers extends DialogFragment {
 
         Tdate = (TextView)view.findViewById(R.id.date);
 
+        loader = (pl.droidsonroids.gif.GifImageView)view.findViewById(R.id.loader);
+
+        textfornodata = (TextView)view.findViewById(R.id.textfornodata);
+
         final Calendar myCalendar = Calendar.getInstance();
 
         DatePickerDialog.OnDateSetListener date = new DatePickerDialog.OnDateSetListener() {
 
+            @RequiresApi(api = Build.VERSION_CODES.KITKAT)
             @Override
             public void onDateSet(DatePicker view, int year, int monthOfYear,
                                   int dayOfMonth) {
@@ -111,7 +127,9 @@ public class DisplayPrevousTriggers extends DialogFragment {
 
                 selecteddate = sdf.format(myCalendar.getTime());
 
-                getHistoryData(selecteddate);
+
+                    getHistoryData(selecteddate);
+
 
 //                updateLabel();
             }
@@ -139,7 +157,9 @@ public class DisplayPrevousTriggers extends DialogFragment {
         SimpleDateFormat df = new SimpleDateFormat("dd-MM-yyyy");
         String formattedDate = df.format(c);
 
-        getHistoryData(formattedDate);
+
+            getHistoryData(formattedDate);
+
 
     }
 
@@ -168,69 +188,84 @@ public class DisplayPrevousTriggers extends DialogFragment {
 
     }
 
-    public void getHistoryData(String date)
-    {
+    public void getHistoryData(String date) {
         historydata.clear();
 
-        ProgressDialog progress = new ProgressDialog(getActivity());
-        progress.setTitle("Loading");
-        progress.setMessage("Wait while loading...");
-        progress.setCancelable(false); // disable dismiss by tapping outside of the dialog
-        progress.show();
+
 // To dismiss the dialog
 
+        loader.setVisibility(View.VISIBLE);
 
         String url = ServerUrl.getHistory;
         HashMap<String, String> params = new HashMap<>();
-        params.put("ec_no",new LocalData(getActivity()).getuserecno());
+//        params.put("ec_no",new LocalData(getActivity()).getuserecno());
+        params.put("ec_no","100000");
         params.put("date",date);
 
         RequestQueue requestQueue = Volley.newRequestQueue(getActivity());
         requestQueue.getCache().clear();
 
 
-        JsonArrayRequest jsonObjectRequest = new JsonArrayRequest(Request.Method.POST, url, null, new Response.Listener<JSONArray>() {
+        JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(Request.Method.POST, url, new JSONObject(params), new Response.Listener<JSONObject>() {
 
             @Override
-            public void onResponse(JSONArray response) {
+            public void onResponse(JSONObject response) {
 
                 Log.wtf("historyresponse", response.toString());
-                progress.dismiss();
-                for (int i = 0; i < response.length(); i++) {
-                    JSONObject jsonObject = response.optJSONObject(i);
 
-                    HistoryData data = new HistoryData();
+                loader.setVisibility(View.GONE);
 
-                    data.setEvent("");
-                    if(jsonObject.optString("in_coordinates").equals("null") && jsonObject.optString("out_coordinates").length() > 0)
-                    {
-                        data.setEvent("Exited");
-                        data.setTime(jsonObject.optString("out_punch"));
-                        data.setLocation(jsonObject.optString("out_location"));
+                if(response.optString("success").equals("1"))
+                {
+                    recyclerviewfence.setVisibility(View.VISIBLE);
+                    textfornodata.setVisibility(View.GONE);
+
+                    JSONArray jsonArray = response.optJSONArray("data");
+
+                    for (int i = 0; i < jsonArray.length(); i++) {
+                        JSONObject jsonObject = jsonArray.optJSONObject(i);
+
+                        HistoryData data = new HistoryData();
+
+                        data.setEvent("");
+                        if(jsonObject.optString("in_coordinates").equals("") && jsonObject.optString("out_coordinates").length() > 0)
+                        {
+                            data.setEvent("Exited");
+                            data.setTime(jsonObject.optString("out_punch"));
+                            data.setLocation(jsonObject.optString("out_location"));
+                        }
+                        else if(jsonObject.optString("out_coordinates").equals("") && jsonObject.optString("in_coordinates").length() > 0)
+                        {
+                            data.setEvent("Entered");
+                            data.setTime(jsonObject.optString("in_punch"));
+                            data.setLocation(jsonObject.optString("in_location"));
+                        }
+
+
+
+                        data.setIn_location(jsonObject.optString("in_location"));
+                        data.setOut_location(jsonObject.optString("out_location"));
+                        data.setIn_coordinates(jsonObject.optString("in_coordinates"));
+                        data.setOut_coordinates(jsonObject.optString("out_coordinates"));
+                        data.setIn_punch(jsonObject.optString("in_punch"));
+                        data.setOut_punch(jsonObject.optString("out_punch"));
+
+                        historydata.add(data);
+
+                        adapetr.setData(historydata);
+                        adapetr.notifyDataSetChanged();
+                        recyclerviewfence.invalidate();
+
                     }
-                    else if(jsonObject.optString("out_coordinates").equals("null") && jsonObject.optString("in_coordinates").length() > 0)
-                    {
-                        data.setEvent("Entered");
-                        data.setTime(jsonObject.optString("in_punch"));
-                        data.setLocation(jsonObject.optString("in_location"));
-                    }
-
-
-
-                    data.setIn_location(jsonObject.optString("in_location"));
-                    data.setOut_location(jsonObject.optString("out_location"));
-                    data.setIn_coordinates(jsonObject.optString("in_coordinates"));
-                    data.setOut_coordinates(jsonObject.optString("out_coordinates"));
-                    data.setIn_punch(jsonObject.optString("in_punch"));
-                    data.setOut_punch(jsonObject.optString("out_punch"));
-
-                    historydata.add(data);
-
-                    adapetr.setData(historydata);
-                    adapetr.notifyDataSetChanged();
-                    recyclerviewfence.invalidate();
-
                 }
+                else
+                {
+                    recyclerviewfence.setVisibility(View.GONE);
+                    textfornodata.setVisibility(View.VISIBLE);
+                    Toast.makeText(getActivity(),"No data found for selected date",Toast.LENGTH_LONG).show();
+                }
+
+
             }
 
         }, new Response.ErrorListener() {

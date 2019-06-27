@@ -6,6 +6,11 @@
     android:minHeight="100dp"
     android:layout_height="match_parent">
 
+
+
+
+
+
     <RelativeLayout
         android:id="@+id/opendatepicker"
         android:gravity="center_horizontal"
@@ -13,26 +18,61 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content">
 
-        <ImageView
-            android:layout_marginLeft="5dp"
-            android:id="@+id/calendarview"
-            android:tint="#0099ED"
-            android:src="@mipmap/calendar"
-            android:layout_width="35dp"
-            android:layout_height="35dp" />
-
-        <TextView
-            android:textStyle="bold"
-            android:id="@+id/date"
-            android:layout_marginLeft="5dp"
-            android:layout_centerVertical="true"
+        <LinearLayout
             android:layout_centerHorizontal="true"
-            android:layout_toRightOf="@+id/calendarview"
-            android:text="Today"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content" />
+            android:gravity="center_horizontal"
+            android:layout_width="match_parent"
+            android:orientation="horizontal"
+            android:layout_height="wrap_content">
+
+            <ImageView
+                android:layout_gravity="center_vertical"
+                android:layout_marginLeft="5dp"
+                android:id="@+id/calendarview"
+                android:tint="#0099ED"
+                android:src="@mipmap/calendar"
+                android:layout_width="35dp"
+                android:layout_height="35dp" />
+
+            <TextView
+                android:layout_gravity="center_vertical"
+                android:textStyle="bold"
+                android:id="@+id/date"
+                android:layout_marginLeft="5dp"
+                android:layout_centerVertical="true"
+                android:layout_centerHorizontal="true"
+                android:layout_toRightOf="@+id/calendarview"
+                android:text="Today"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content" />
+
+        </LinearLayout>
+
+
+
+        <pl.droidsonroids.gif.GifImageView
+            android:visibility="visible"
+            android:paddingRight="10dp"
+            android:id="@+id/loader"
+            android:layout_centerVertical="true"
+            android:layout_width="35dp"
+            android:layout_height="35dp"
+            android:src="@drawable/loader"
+            android:layout_alignParentRight="true"
+            />
+
 
     </RelativeLayout>
+
+    <TextView
+        android:visibility="gone"
+        android:id="@+id/textfornodata"
+        android:textStyle="bold"
+        android:layout_marginTop="15dp"
+        android:layout_gravity="center_horizontal"
+        android:text="No data found for selected date"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content" />
 
     <android.support.v7.widget.RecyclerView
         android:paddingLeft="10dp"
@@ -41,5 +81,9 @@
         android:id="@+id/recyclerviewfence"
         android:layout_width="match_parent"
         android:layout_height="match_parent"></android.support.v7.widget.RecyclerView>
+
+
+
+
 
 </LinearLayout>

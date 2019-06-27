@@ -130,7 +130,7 @@ class LocationResultHelper {
                         getLocationResultText())
                 .apply();
 
-
+         Log.wtf("Locationupdatealtitide",String.valueOf(mLocations.get(0).getAltitude()));
       //  PreferenceManager.getDefaultSharedPreferences(mContext).edit().putString("counter",)
 
     }
