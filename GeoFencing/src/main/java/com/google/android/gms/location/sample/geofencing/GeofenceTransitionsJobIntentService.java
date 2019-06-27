@@ -312,36 +312,36 @@ public class GeofenceTransitionsJobIntentService extends JobIntentService {
 
         //
 
-        if(new LocalData(getApplicationContext()).getDime().equals("0"))
-        {
-
-        }
-        else
-        {
-            Gson gson = new Gson();
-            String json = new LocalData(getApplicationContext()).getDime();
-            Type type = new TypeToken<ArrayList<GeoFenceArraylist>>() {}.getType();
-            arraylists =  gson.fromJson(json, type);
-        }
-
-
-        Date currentTime = Calendar.getInstance().getTime();
-
-        GeoFenceArraylist data = new GeoFenceArraylist();
-        data.setEvent(notificationDetails);
-        data.setName("Hero Office");
-        data.setTime(String.valueOf(currentTime));
-        data.setProvider("Geo Fence Transition");
-
-        arraylists.add(data);
-
-
-
-            // save the task list to preference
-
-        Gson gson1 = new Gson();
-        String json1 = gson1.toJson(arraylists);
-        new LocalData(getApplicationContext()).setDime(json1);
+//        if(new LocalData(getApplicationContext()).getDime().equals("0"))
+//        {
+//
+//        }
+//        else
+//        {
+//            Gson gson = new Gson();
+//            String json = new LocalData(getApplicationContext()).getDime();
+//            Type type = new TypeToken<ArrayList<GeoFenceArraylist>>() {}.getType();
+//            arraylists =  gson.fromJson(json, type);
+//        }
+//
+//
+//        Date currentTime = Calendar.getInstance().getTime();
+//
+//        GeoFenceArraylist data = new GeoFenceArraylist();
+//        data.setEvent(notificationDetails);
+//        data.setName("Hero Office");
+//        data.setTime(String.valueOf(currentTime));
+//        data.setProvider("Geo Fence Transition");
+//
+//        arraylists.add(data);
+//
+//
+//
+//            // save the task list to preference
+//
+//        Gson gson1 = new Gson();
+//        String json1 = gson1.toJson(arraylists);
+//        new LocalData(getApplicationContext()).setDime(json1);
 
 
 

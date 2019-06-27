@@ -529,7 +529,7 @@ public class NotificationReceiverActivity extends AppCompatActivity
                                 .fillColor(0x5500ff00));
                         CameraUpdate cameraUpdate = CameraUpdateFactory.newLatLngZoom(geofencelatLng, 15);
                         mMap.animateCamera(cameraUpdate);
-                        locationManager.removeUpdates(NotificationReceiverActivity.this);
+                       // locationManager.removeUpdates(NotificationReceiverActivity.this);
 
                         //setting user selected data to locaL
                         new LocalData(getApplicationContext()).setuserselctedlocation(location);
@@ -851,7 +851,7 @@ public class NotificationReceiverActivity extends AppCompatActivity
         Log.wtf("CurrentLocation", latLng.toString());
         CameraUpdate cameraUpdate = CameraUpdateFactory.newLatLngZoom(latLng, 15);
         mMap.animateCamera(cameraUpdate);
-        locationManager.removeUpdates(this);
+       // locationManager.removeUpdates(this);
 
         usercurrentlocation = latLng;
         //drawing circle

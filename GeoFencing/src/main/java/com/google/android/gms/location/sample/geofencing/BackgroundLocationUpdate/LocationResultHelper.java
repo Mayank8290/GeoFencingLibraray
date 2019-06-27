@@ -225,36 +225,36 @@ class LocationResultHelper {
             // saving data to local
 
 
-            if(new LocalData(mContext).getDime().equals("0"))
-            {
-
-            }
-            else
-            {
-                Gson gson = new Gson();
-                String json = new LocalData(mContext).getDime();
-                Type type = new TypeToken<ArrayList<GeoFenceArraylist>>() {}.getType();
-                arraylists =  gson.fromJson(json, type);
-            }
-
-
-            Date currentTime = Calendar.getInstance().getTime();
-
-            GeoFenceArraylist data = new GeoFenceArraylist();
-            data.setEvent("Entered :"+new LocalData(mContext).getuserselctedlocation());
-            data.setName("Hero Office");
-            data.setTime(String.valueOf(currentTime));
-            data.setProvider("Manually Geo Fence");
-
-            arraylists.add(data);
-
-
-
-            // save the task list to preference
-
-            Gson gson1 = new Gson();
-            String json1 = gson1.toJson(arraylists);
-            new LocalData(mContext).setDime(json1);
+//            if(new LocalData(mContext).getDime().equals("0"))
+//            {
+//
+//            }
+//            else
+//            {
+//                Gson gson = new Gson();
+//                String json = new LocalData(mContext).getDime();
+//                Type type = new TypeToken<ArrayList<GeoFenceArraylist>>() {}.getType();
+//                arraylists =  gson.fromJson(json, type);
+//            }
+//
+//
+//            Date currentTime = Calendar.getInstance().getTime();
+//
+//            GeoFenceArraylist data = new GeoFenceArraylist();
+//            data.setEvent("Entered :"+new LocalData(mContext).getuserselctedlocation());
+//            data.setName("Hero Office");
+//            data.setTime(String.valueOf(currentTime));
+//            data.setProvider("Manually Geo Fence");
+//
+//            arraylists.add(data);
+//
+//
+//
+//            // save the task list to preference
+//
+//            Gson gson1 = new Gson();
+//            String json1 = gson1.toJson(arraylists);
+//            new LocalData(mContext).setDime(json1);
 
 
             senddatatoserver("Entered",String.valueOf(mLocations.get(mLocations.size()-1).getLatitude()),String.valueOf(mLocations.get(mLocations.size()-1).getLongitude()));
