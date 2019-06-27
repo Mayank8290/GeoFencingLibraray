@@ -198,8 +198,7 @@ public class DisplayPrevousTriggers extends DialogFragment {
 
         String url = ServerUrl.getHistory;
         HashMap<String, String> params = new HashMap<>();
-//        params.put("ec_no",new LocalData(getActivity()).getuserecno());
-        params.put("ec_no","100000");
+        params.put("ec_no",new LocalData(getActivity()).getuserecno());
         params.put("date",date);
 
         RequestQueue requestQueue = Volley.newRequestQueue(getActivity());
