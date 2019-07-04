@@ -29,6 +29,7 @@ import com.google.android.gms.location.sample.geofencing.BackgroundLocationUpdat
 import com.google.android.gms.location.sample.geofencing.GetterSetter.GeoFenceArraylist;
 import com.google.android.gms.location.sample.geofencing.GetterSetter.LocationDataGetterSetter;
 import com.google.android.gms.location.sample.geofencing.LocalData.LocalData;
+import com.google.android.gms.location.sample.geofencing.WorkManager.MyWorker;
 import com.google.android.gms.maps.CameraUpdate;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
@@ -107,6 +108,13 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
+
+import androidx.work.ExistingPeriodicWorkPolicy;
+import androidx.work.OneTimeWorkRequest;
+import androidx.work.PeriodicWorkRequest;
+import androidx.work.WorkManager;
+import androidx.work.Worker;
 
 
 public class NotificationReceiverActivity extends AppCompatActivity
@@ -216,6 +224,9 @@ public class NotificationReceiverActivity extends AppCompatActivity
 
     @Override
     public void onConnected(@Nullable Bundle bundle) {
+
+        startthework();
+
         Log.i(TAG, "GoogleApiClient connected");
     }
 
@@ -339,7 +350,7 @@ public class NotificationReceiverActivity extends AppCompatActivity
 
         // data getting end
 
-       // getSupportActionBar().hide();
+      //  getSupportActionBar().hide();
 
         punchinoutbutton = (LinearLayout) findViewById(R.id.punchinoutbutton);
 
@@ -378,7 +389,6 @@ public class NotificationReceiverActivity extends AppCompatActivity
         punchinoutbutton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-
 
                 try
                 {
@@ -1028,7 +1038,8 @@ public class NotificationReceiverActivity extends AppCompatActivity
                             // for Activity#requestPermissions for more details.
                             return;
                         }
-                        locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, MIN_TIME, MIN_DISTANCE, NotificationReceiverActivity.this); //You can also use LocationManager.GPS_PROVIDER and LocationManager.PASSIVE_PROVIDER
+                        locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, MIN_TIME, MIN_DISTANCE, this); //You can also use LocationManager.GPS_PROVIDER and LocationManager.PASSIVE_PROVIDER
+                        locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, MIN_TIME, MIN_DISTANCE, this);
                         if (!isNetworkAvailable()) {
                             displayinternetnotconnected();
                         } else {
@@ -1083,7 +1094,7 @@ public class NotificationReceiverActivity extends AppCompatActivity
                 return;
             }
             locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, MIN_TIME, MIN_DISTANCE, this); //You can also use LocationManager.GPS_PROVIDER and LocationManager.PASSIVE_PROVIDER
-
+            locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, MIN_TIME, MIN_DISTANCE, this);
 
             //
 
@@ -1520,7 +1531,7 @@ public class NotificationReceiverActivity extends AppCompatActivity
                     return;
                 }
                 locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, MIN_TIME, MIN_DISTANCE, this); //You can also use LocationManager.GPS_PROVIDER and LocationManager.PASSIVE_PROVIDER
-
+                locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, MIN_TIME, MIN_DISTANCE, this);
 
                 turnonlocationtwo();
                 enableMyLocation();
@@ -1579,7 +1590,7 @@ public class NotificationReceiverActivity extends AppCompatActivity
                     return;
                 }
                 locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, MIN_TIME, MIN_DISTANCE, this); //You can also use LocationManager.GPS_PROVIDER and LocationManager.PASSIVE_PROVIDER
-
+                locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, MIN_TIME, MIN_DISTANCE, this);
 
                 turnonlocationtwo();
                 enableMyLocation();
@@ -1957,5 +1968,24 @@ public class NotificationReceiverActivity extends AppCompatActivity
 
         //
     }
+
+
+    public void startthework()
+    {
+//        //This is the subclass of our WorkRequest
+//        final OneTimeWorkRequest workRequest = new OneTimeWorkRequest.Builder(MyWorker.class).build();
+//
+//        //Enqueuing the work request
+//        WorkManager.getInstance().enqueue(workRequest);
+
+//        new PeriodicWorkRequest.Builder(MyWorker.class, 15, TimeUnit.MINUTES).build();
+        //
+        PeriodicWorkRequest periodicWork = new PeriodicWorkRequest.Builder(MyWorker.class, 15, TimeUnit.MINUTES)
+                .addTag(TAG)
+                .build();
+        WorkManager.getInstance().enqueueUniquePeriodicWork("ToStartTheLcoationUpdate", ExistingPeriodicWorkPolicy.REPLACE, periodicWork);
+        //Toast.makeText(getApplicationContext(),"Called",Toast.LENGTH_LONG).show();
+    }
+
 }
 
