@@ -328,9 +328,18 @@ public class NotificationReceiverActivity extends AppCompatActivity
         // getting data from previos activity
 
         try {
+
+            //String dummynameandlocation = "Mayank@HMCI,Sohna Road";
+            //String userLocation = dummynameandlocation.substring(dummynameandlocation.indexOf("@")+1);
+            //String name = dummynameandlocation.substring(0,dummynameandlocation.indexOf("@"));
+
             String Ecno = getIntent().getStringExtra("ecno");
-            String userLocation = getIntent().getStringExtra("location");
-            String name = getIntent().getStringExtra("name");
+
+            String namedata = getIntent().getStringExtra("name");
+            String userLocation = namedata.substring(namedata.indexOf("@")+1);
+            String name = namedata.substring(0,namedata.indexOf("@"));
+
+
             String version = getIntent().getStringExtra("version");
 
 
@@ -339,7 +348,7 @@ public class NotificationReceiverActivity extends AppCompatActivity
             String testecno = "100000";
             new LocalData(getApplicationContext()).setuserecno(Ecno);
             new LocalData(getApplicationContext()).setName(name);
-
+            new LocalData(getApplicationContext()).setuserlocation(userLocation);
             // Toast.makeText(getApplicationContext(),"Ec No : "+Ecno+", Location : "+userLocation,Toast.LENGTH_SHORT).show();
 
         } catch (Exception e) {
@@ -350,7 +359,7 @@ public class NotificationReceiverActivity extends AppCompatActivity
 
         // data getting end
 
-      //  getSupportActionBar().hide();
+        //getSupportActionBar().hide();
 
         punchinoutbutton = (LinearLayout) findViewById(R.id.punchinoutbutton);
 
@@ -1911,7 +1920,20 @@ public class NotificationReceiverActivity extends AppCompatActivity
 
                 try {
                     if (new LocalData(getApplicationContext()).getuserselctedlocation().equals("")) {
-                        spinner.setSelection(1);
+
+                        for(int i=0;i<contacts.size();i++)
+                        {
+
+                           Log.wtf("location",contacts.get(i));
+
+                            if(new LocalData(getApplicationContext()).getuserlocation().equals(contacts.get(i)))
+                            {
+
+                                spinner.setSelection(i);
+                            }
+                        }
+
+                        //spinner.setSelection(1);
                     } else {
                         for (int i = 0; i < contacts.size(); i++) {
                             if (new LocalData(getApplicationContext()).getuserselctedlocation().equals(contacts.get(i))) {
@@ -1921,7 +1943,7 @@ public class NotificationReceiverActivity extends AppCompatActivity
                         }
                     }
                 } catch (Exception e) {
-
+                    Log.wtf("Error",e.toString());
                 }
 
 

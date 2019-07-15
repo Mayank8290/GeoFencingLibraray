@@ -133,12 +133,12 @@ public class LocalData {
 
 
 
-    public String setuserlocation()
+    public String getuserlocation()
     {
         return  pref.getString("userlocation","");
     }
 
-    public void getuserlocation(String event)
+    public void setuserlocation(String event)
     {
         editor.putString("userlocation",event);
         editor.commit();
